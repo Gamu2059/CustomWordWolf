@@ -52,12 +52,12 @@ namespace ManagedData {
 
         public RoomData GetRoomDataByContainPlayer(uint playerNetId) {
             CheckDictionary();
-            return roomDictionary.Values.First(d => d.ContainMember(playerNetId));
+            return roomDictionary.Values.FirstOrDefault(d => d.ContainMember(playerNetId));
         }
 
         public RoomData GetRoomDataByHostPlayer(uint hostPlayerNetId) {
             CheckDictionary();
-            return roomDictionary.Values.First(d => d.CurrentHostNetId == hostPlayerNetId);
+            return roomDictionary.Values.FirstOrDefault(d => d.CurrentHostNetId == hostPlayerNetId);
         }
 
         public bool ExistRoomByGuid(Guid guid) {

@@ -7,12 +7,11 @@ using UnityEngine.UI;
 
 namespace Game {
     public class GameView : MonoBehaviour {
-
         [SerializeField]
         private Button leaveRoomButton;
 
         public IObservable<Unit> LeaveRoomButtonObservable => leaveRoomButton.OnClickAsObservable();
-        
+
         [SerializeField]
         private Button startGameButton;
 
@@ -30,15 +29,38 @@ namespace Game {
         private Text themeText;
 
         public void Initialize() {
-            
+            SetReadyGameUI();
+            SetActiveStartButton(false);
+        }
+
+        public void SetActiveStartButton(bool isActive) {
+            startGameButton.gameObject.SetActive(isActive);
         }
 
         public void SetTheme(string theme) {
-            
+            themeText.text = $"テーマは{theme}です";
         }
 
         public void SetRemainTime(int remainTime) {
-            
+            remainTimeText.text = $"残り時間 {remainTime}";
+        }
+
+        public void SetReadyGameUI() {
+            remainTimeText.gameObject.SetActive(false);
+            themeText.gameObject.SetActive(false);
+            backRoomButton.gameObject.SetActive(false);
+        }
+
+        public void SetStartGameUI() {
+            remainTimeText.gameObject.SetActive(true);
+            themeText.gameObject.SetActive(true);
+            backRoomButton.gameObject.SetActive(false);
+        }
+
+        public void SetTimeOverGameUI() {
+            remainTimeText.gameObject.SetActive(false);
+            themeText.gameObject.SetActive(false);
+            backRoomButton.gameObject.SetActive(true);
         }
     }
 }

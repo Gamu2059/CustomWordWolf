@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Manager {
-    public class CustomNetworkManager : NetworkManager {
+    public partial class CustomNetworkManager : NetworkManager {
         #region Inspector
 
         [SerializeField]
@@ -23,6 +23,12 @@ namespace Manager {
         private PlayerDataHolder playerDataHolder;
         private RoomDataHolder roomDataHolder;
 
+        private List<(string, string)> themeList = new List<(string, string)> {
+            ("Java", "JavaScript"),
+            ("CyberAgent", "DeNA"),
+            ("ななさん", "さとこさん"),
+        };
+        
         #endregion
 
         #region Server System Callbacks
@@ -130,21 +136,31 @@ namespace Manager {
             playerDataHolder = new PlayerDataHolder();
             roomDataHolder = new RoomDataHolder();
 
+            NetworkServer.RegisterHandler<LoadGameScene.Request>(RequestedLoadGameScene);
+
             NetworkServer.RegisterHandler<ApplyPlayerName.Request>(RequestedApplyPlayerName);
             NetworkServer.RegisterHandler<CreateRoom.Request>(RequestedCreateRoom);
             NetworkServer.RegisterHandler<RoomList.Request>(RequestedRoomList);
             NetworkServer.RegisterHandler<JoinRoom.Request>(RequestedJoinRoom);
 
             NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
+            NetworkServer.RegisterHandler<VotePlayer.Request>(RequestedVotePlayer);
         }
 
         private void InitializeClient() {
+            NetworkClient.RegisterHandler<LoadGameScene.Response>(ResponseLoadGameScene);
+
             NetworkClient.RegisterHandler<ApplyPlayerName.Response>(ResponseApplyPlayerName);
             NetworkClient.RegisterHandler<CreateRoom.Response>(ResponseCreateRoom);
             NetworkClient.RegisterHandler<RoomList.Response>(ResponseRoomList);
             NetworkClient.RegisterHandler<JoinRoom.Response>(ResponseJoinRoom);
+            NetworkClient.RegisterHandler<StartGame.Response>(ResponseStartGame);
+            NetworkClient.RegisterHandler<VotePlayer.Response>(ResponseVotePlayer);
 
+            NetworkClient.RegisterHandler<ChangeHost.SendPlayer>(ReceiveChangeHost);
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
+            NetworkClient.RegisterHandler<TimeOver.SendRoom>(ReceiveTimeOver);
+            NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
 
             SceneManager.LoadScene(titleScene);
         }
@@ -152,15 +168,23 @@ namespace Manager {
         #region Server Request
 
         /// <summary>
+        /// サーバから部屋のホスト変更を通知する。
+        /// </summary>
+        private void SendPlayerChangeHost(NetworkConnection connection) {
+            connection.Send(new ChangeHost.SendPlayer());
+        }
+
+        /// <summary>
         /// サーバからゲーム開始を通知する。
         /// </summary>
         private void SendRoomStartGame(RoomData roomData, int remainTime, DateTime countStartDateTime) {
             var memberList = roomData.GetAllMemberList();
             var wolfMember = memberList.OrderBy(_ => Guid.NewGuid()).First();
+            var theme = themeList.OrderBy(_ => Guid.NewGuid()).First();
 
             foreach (var member in memberList) {
                 var data = new StartGame.SendRoom {
-                    Theme = member == wolfMember ? "Java" : "JavaScript",
+                    Theme = member == wolfMember ? theme.Item1 : theme.Item2,
                     RemainTime = remainTime,
                     CountStartDateTime = countStartDateTime,
                 };
@@ -189,6 +213,25 @@ namespace Manager {
         #endregion
 
         #region Server Response
+
+        /// <summary>
+        /// クライアントがゲームシーンを呼び出した時の処理。
+        /// </summary>
+        private void RequestedLoadGameScene(NetworkConnection connection, LoadGameScene.Request request) {
+            var identity = connection.identity;
+            var netId = identity.netId;
+            var roomData = roomDataHolder.GetRoomDataByContainPlayer(netId);
+            if (roomData == null) {
+                connection.Send(new LoadGameScene.Response {Result = LoadGameScene.Result.Failure});
+                return;
+            }
+
+            var response = new LoadGameScene.Response {
+                Result = LoadGameScene.Result.Succeed,
+                IsHost = netId == roomData.CurrentHostNetId,
+            };
+            connection.Send(response);
+        }
 
         /// <summary>
         /// クライアントから名前の適用をリクエストされた時の処理。
@@ -231,6 +274,7 @@ namespace Manager {
                 return;
             }
 
+            roomData.JoinRoom(connection);
             connection.Send(new CreateRoom.Response
                 {Result = CreateRoom.Result.Succeed, CreatedRoomData = roomData.CreateConnectRoomData()});
         }
@@ -246,7 +290,6 @@ namespace Manager {
                 .Select(d => d.CreateConnectRoomData())
                 .ToList();
             connection.Send(new RoomList.Response {Result = RoomList.Result.Succeed, RoomDataList = roomDataList});
-            Debug.Log("部屋取得 : " + roomDataList.Count);
         }
 
         /// <summary>
@@ -278,7 +321,7 @@ namespace Manager {
                 return;
             }
 
-            var remainTime = 30;
+            var remainTime = 10;
             var countStartDateTime = DateTime.UtcNow;
             roomData.StartGame();
             connection.Send(new StartGame.Response {Result = StartGame.Result.Succeed});
@@ -310,6 +353,13 @@ namespace Manager {
         #endregion
 
         #region Client Request
+
+        /// <summary>
+        /// ゲームシーンを読み込んだ時に送信する。
+        /// </summary>
+        public void RequestLoadGameScene(LoadGameScene.Request request) {
+            NetworkClient.connection.Send(request);
+        }
 
         /// <summary>
         /// プレイヤー名を適用する。
@@ -359,6 +409,12 @@ namespace Manager {
 
         #region Client Response
 
+        public event Action<LoadGameScene.Response> OnLoadGameSceneResponse;
+
+        private void ResponseLoadGameScene(NetworkConnection connection, LoadGameScene.Response response) {
+            OnLoadGameSceneResponse?.Invoke(response);
+        }
+
         public event Action<ApplyPlayerName.Response> OnApplyPlayerNameResponse;
 
         private void ResponseApplyPlayerName(NetworkConnection connection, ApplyPlayerName.Response response) {
@@ -369,6 +425,12 @@ namespace Manager {
 
         private void ResponseCreateRoom(NetworkConnection connection, CreateRoom.Response response) {
             OnCreateRoomResponse?.Invoke(response);
+        }
+
+        public event Action<ChangeHost.SendPlayer> OnChangeHostReceived;
+
+        private void ReceiveChangeHost(NetworkConnection connection, ChangeHost.SendPlayer data) {
+            OnChangeHostReceived?.Invoke(data);
         }
 
         public event Action<RoomList.Response> OnRoomListResponse;
@@ -395,10 +457,16 @@ namespace Manager {
             OnStartGameReceived?.Invoke(data);
         }
 
-        public event Action OnTimeOverReceived;
+        public event Action<TimeOver.SendRoom> OnTimeOverReceived;
 
         private void ReceiveTimeOver(NetworkConnection connection, TimeOver.SendRoom data) {
-            OnTimeOverReceived?.Invoke();
+            OnTimeOverReceived?.Invoke(data);
+        }
+
+        public event Action<VotePlayer.Response> OnVotePlayerResponse;
+
+        private void ResponseVotePlayer(NetworkConnection connection, VotePlayer.Response response) {
+            OnVotePlayerResponse?.Invoke(response);
         }
 
         public event Action<VotePlayer.SendRoom> OnVotePlayerReceived;
