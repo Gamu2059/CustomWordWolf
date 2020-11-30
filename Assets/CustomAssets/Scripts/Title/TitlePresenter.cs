@@ -44,14 +44,8 @@ namespace Title {
 
             view.Initialize(playerName);
             SetViewEvents();
-
-            editPlayerNameWindowPresenter.Initialize();
-            createRoomWindowPresenter.Initialize();
-            joinRoomWindowPresenter.Initialize();
-
-            editPlayerNameWindowPresenter.OnPlayerNameEdited += OnPlayerNameEdited;
-            createRoomWindowPresenter.OnRoomNameDecided += OnRoomNameDecided;
-            joinRoomWindowPresenter.OnRoomDecided += OnJoinRoomDecided;
+            InitializeChildPresenter();
+            SetChildPresenterEvents();
         }
 
         private void SetViewEvents() {
@@ -64,6 +58,18 @@ namespace Title {
             view.JoinRoomButtonObservable
                 .Subscribe(_ => joinRoomWindowPresenter.Show())
                 .AddTo(gameObject);
+        }
+
+        private void InitializeChildPresenter() {
+            editPlayerNameWindowPresenter.Initialize();
+            createRoomWindowPresenter.Initialize();
+            joinRoomWindowPresenter.Initialize();
+        }
+
+        private void SetChildPresenterEvents() {
+            editPlayerNameWindowPresenter.OnPlayerNameEdited += OnPlayerNameEdited;
+            createRoomWindowPresenter.OnRoomNameDecided += OnRoomNameDecided;
+            joinRoomWindowPresenter.OnRoomDecided += OnJoinRoomDecided;
         }
 
         private async void OnPlayerNameEdited(string playerName) {
