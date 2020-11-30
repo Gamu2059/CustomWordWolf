@@ -5,6 +5,7 @@ using System.Linq;
 using ConnectData;
 using ManagedData;
 using Mirror;
+using UniRx;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -133,6 +134,8 @@ namespace Manager {
             NetworkServer.RegisterHandler<CreateRoom.Request>(RequestedCreateRoom);
             NetworkServer.RegisterHandler<RoomList.Request>(RequestedRoomList);
             NetworkServer.RegisterHandler<JoinRoom.Request>(RequestedJoinRoom);
+
+            NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
         }
 
         private void InitializeClient() {
@@ -140,10 +143,48 @@ namespace Manager {
             NetworkClient.RegisterHandler<CreateRoom.Response>(ResponseCreateRoom);
             NetworkClient.RegisterHandler<RoomList.Response>(ResponseRoomList);
             NetworkClient.RegisterHandler<JoinRoom.Response>(ResponseJoinRoom);
+
+            NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
+
             SceneManager.LoadScene(titleScene);
         }
 
         #region Server Request
+
+        /// <summary>
+        /// サーバからゲーム開始を通知する。
+        /// </summary>
+        private void SendRoomStartGame(RoomData roomData, int remainTime, DateTime countStartDateTime) {
+            var memberList = roomData.GetAllMemberList();
+            var wolfMember = memberList.OrderBy(_ => Guid.NewGuid()).First();
+
+            foreach (var member in memberList) {
+                var data = new StartGame.SendRoom {
+                    Theme = member == wolfMember ? "Java" : "JavaScript",
+                    RemainTime = remainTime,
+                    CountStartDateTime = countStartDateTime,
+                };
+                member.Send(data);
+            }
+        }
+
+        /// <summary>
+        /// サーバから時間切れを通知する。
+        /// </summary>
+        private void SendRoomTimeOver(RoomData roomData) {
+            foreach (var member in roomData.GetAllMember()) {
+                member.Send(new TimeOver.SendRoom());
+            }
+        }
+
+        /// <summary>
+        /// サーバから投票を通知する。
+        /// </summary>
+        private void SendRoomVotePlayer(RoomData roomData, uint voteOriginPlayerNetId) {
+            foreach (var member in roomData.GetAllMember()) {
+                member.Send(new VotePlayer.SendRoom {VoteOriginPlayerNetId = voteOriginPlayerNetId});
+            }
+        }
 
         #endregion
 
@@ -172,7 +213,7 @@ namespace Manager {
         private void RequestedCreateRoom(NetworkConnection connection, CreateRoom.Request request) {
             var identity = connection.identity;
             var netId = identity.netId;
-            if (roomDataHolder.ExistRoomByPlayer(netId)) {
+            if (roomDataHolder.ExistRoomByHostPlayer(netId)) {
                 // 同一プレイヤーは部屋を立てらない
                 connection.Send(new CreateRoom.Response {Result = CreateRoom.Result.Failure});
                 return;
@@ -219,10 +260,51 @@ namespace Manager {
 
             // TODO:部屋で既にゲーム開始している場合は入れない
 
-            var roomData = roomDataHolder.GetRoomData(request.RoomGuid);
-            roomData.JoinRoom();
+            var roomData = roomDataHolder.GetRoomDataByGuid(request.RoomGuid);
+            roomData.JoinRoom(connection);
             connection.Send(new JoinRoom.Response
                 {Result = JoinRoom.Result.Succeed, JoinedRoomData = roomData.CreateConnectRoomData()});
+        }
+
+        /// <summary>
+        /// クライアントからゲーム開始をリクエストされた時の処理。
+        /// </summary>
+        private void RequestedStartGame(NetworkConnection connection, StartGame.Request request) {
+            var identity = connection.identity;
+            var netId = identity.netId;
+            var roomData = roomDataHolder.GetRoomDataByHostPlayer(netId);
+            if (roomData == null) {
+                connection.Send(new StartGame.Response {Result = StartGame.Result.Failure});
+                return;
+            }
+
+            var remainTime = 30;
+            var countStartDateTime = DateTime.UtcNow;
+            roomData.StartGame();
+            connection.Send(new StartGame.Response {Result = StartGame.Result.Succeed});
+            SendRoomStartGame(roomData, remainTime, countStartDateTime);
+
+            Observable.Timer(TimeSpan.FromSeconds(remainTime)).Subscribe(_ => {
+                // タイムオーバー処理
+                SendRoomTimeOver(roomData);
+            }).AddTo(gameObject);
+        }
+
+        /// <summary>
+        /// クライアントから投票をリクエストされた時の処理。
+        /// </summary>
+        private void RequestedVotePlayer(NetworkConnection connection, VotePlayer.Request request) {
+            var identity = connection.identity;
+            var netId = identity.netId;
+            var roomData = roomDataHolder.GetRoomDataByContainPlayer(netId);
+            if (roomData == null) {
+                connection.Send(new VotePlayer.Response {Result = VotePlayer.Result.Failure});
+                return;
+            }
+
+            roomData.VotePlayer(netId, request.VoteForwardPlayerNetId);
+            connection.Send(new VotePlayer.Response {Result = VotePlayer.Result.Succeed});
+            SendRoomVotePlayer(roomData, netId);
         }
 
         #endregion
@@ -259,6 +341,20 @@ namespace Manager {
             NetworkClient.connection.Send(request);
         }
 
+        /// <summary>
+        /// ゲーム開始をリクエストする。
+        /// </summary>
+        public void RequestStartGame(StartGame.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        /// <summary>
+        /// 投票をリクエストする。
+        /// </summary>
+        public void RequestVotePlayer(VotePlayer.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
         #endregion
 
         #region Client Response
@@ -285,6 +381,30 @@ namespace Manager {
 
         private void ResponseJoinRoom(NetworkConnection connection, JoinRoom.Response response) {
             OnJoinRoomResponse?.Invoke(response);
+        }
+
+        public event Action<StartGame.Response> OnStartGameResponse;
+
+        private void ResponseStartGame(NetworkConnection connection, StartGame.Response response) {
+            OnStartGameResponse?.Invoke(response);
+        }
+
+        public event Action<StartGame.SendRoom> OnStartGameReceived;
+
+        private void ReceiveStartGame(NetworkConnection connection, StartGame.SendRoom data) {
+            OnStartGameReceived?.Invoke(data);
+        }
+
+        public event Action OnTimeOverReceived;
+
+        private void ReceiveTimeOver(NetworkConnection connection, TimeOver.SendRoom data) {
+            OnTimeOverReceived?.Invoke();
+        }
+
+        public event Action<VotePlayer.SendRoom> OnVotePlayerReceived;
+
+        private void ReceiveVotePlayer(NetworkConnection connection, VotePlayer.SendRoom data) {
+            OnVotePlayerReceived?.Invoke(data);
         }
 
         #endregion

@@ -41,7 +41,7 @@ namespace ManagedData {
             roomDictionary.Remove(guid);
         }
 
-        public RoomData GetRoomData(Guid guid) {
+        public RoomData GetRoomDataByGuid(Guid guid) {
             CheckDictionary();
             if (roomDictionary.TryGetValue(guid, out var roomData)) {
                 return roomData;
@@ -50,14 +50,29 @@ namespace ManagedData {
             return null;
         }
 
-        public bool ExistRoomByPlayer(uint playerNetId) {
+        public RoomData GetRoomDataByContainPlayer(uint playerNetId) {
             CheckDictionary();
-            return GetAllRoomData().Exists(d => d.CurrentHostNetId == playerNetId);
+            return roomDictionary.Values.First(d => d.ContainMember(playerNetId));
+        }
+
+        public RoomData GetRoomDataByHostPlayer(uint hostPlayerNetId) {
+            CheckDictionary();
+            return roomDictionary.Values.First(d => d.CurrentHostNetId == hostPlayerNetId);
         }
 
         public bool ExistRoomByGuid(Guid guid) {
             CheckDictionary();
             return roomDictionary.ContainsKey(guid);
+        }
+
+        public bool ExistRoomByContainPlayer(uint playerNetId) {
+            CheckDictionary();
+            return roomDictionary.Values.Any(d => d.ContainMember(playerNetId));
+        }
+
+        public bool ExistRoomByHostPlayer(uint hostPlayerNetId) {
+            CheckDictionary();
+            return roomDictionary.Values.Any(d => d.CurrentHostNetId == hostPlayerNetId);
         }
     }
 }
