@@ -1,57 +1,38 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TitleView : MonoBehaviour {
-    
-    [Header("Name")]
-    
-    [SerializeField]
-    private Text nameText;
+namespace Title {
+    public class TitleView : MonoBehaviour {
+        [SerializeField]
+        private Text playerNameText;
 
-    [SerializeField]
-    private Button editNameButton;
+        public string PlayerName => playerNameText.text;
 
-    [Header("Room")]
+        [SerializeField]
+        private Button editPlayerNameButton;
 
-    [SerializeField]
-    private Button createRoomButton;
+        public IObservable<Unit> EditPlayerNameButtonObservable => editPlayerNameButton.OnClickAsObservable();
 
-    [SerializeField]
-    private Button joinRoomButton;
+        [SerializeField]
+        private Button createRoomButton;
 
-    [Header("Edit Name Window")]
+        public IObservable<Unit> CreateRoomButtonObservable => createRoomButton.OnClickAsObservable();
+        
+        [SerializeField]
+        private Button joinRoomButton;
 
-    [SerializeField]
-    private GameObject editNameWindow;
-    
-    [SerializeField]
-    private InputField editNameInputField;
+        public IObservable<Unit> JoinRoomButtonObservable => joinRoomButton.OnClickAsObservable();
+        
+        public void Initialize(string playerName) {
+            SetPlayerName(playerName);
+        }
 
-    [SerializeField]
-    private Button editNameOkButton;
-
-    [Header("Create Room Window")]
-
-    [SerializeField]
-    private GameObject createRoomWindow;
-    
-    [SerializeField]
-    private InputField createRoomNameInputField;
-
-    [SerializeField]
-    private Button createRoomOkButton;
-
-    [Header("Join Room Window")]
-
-    [SerializeField]
-    private GameObject joinRoomWindow;
-    
-    [SerializeField]
-    
-    
-    private void Start() {
+        public void SetPlayerName(string playerName) {
+            playerNameText.text = playerName.Trim();
+        }
     }
 }

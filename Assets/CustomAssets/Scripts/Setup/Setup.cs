@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Mirror;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +16,7 @@ public class Setup : MonoBehaviour {
     private Button clientButton;
 
     private void Start() {
-        serverButton.onClick.AddListener(NetworkManager.singleton.StartServer);
-        clientButton.onClick.AddListener(NetworkManager.singleton.StartClient);
+        serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
+        clientButton.OnClickAsObservable().Subscribe( _ => NetworkManager.singleton.StartClient());
     }
 }
