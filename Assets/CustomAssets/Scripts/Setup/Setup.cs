@@ -5,27 +5,33 @@ using Cysharp.Threading.Tasks;
 using Mirror;
 using UniRx;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class Setup : MonoBehaviour {
+namespace Setup {
+    public class Setup : MonoBehaviour {
+        [SerializeField]
+        private bool isDebug;
 
-    [SerializeField]
-    private bool isDebug;
+        [SerializeField]
+        private string address;
 
-    [SerializeField]
-    private string address;
-    
-    [SerializeField]
-    private Button serverButton;
+        [Scene]
+        [SerializeField]
+        private string gameScene;
 
-    [SerializeField]
-    private Button clientButton;
+        [SerializeField]
+        private Button serverButton;
 
-    private void Start() {
+        [SerializeField]
+        private Button clientButton;
+
+        private void Start() {
 #if !UNITY_SERVER
-        NetworkManager.singleton.networkAddress = isDebug ? "localhost" : address;
-        serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
-        clientButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartClient());
+            NetworkManager.singleton.networkAddress = isDebug ? "localhost" : address;
+            serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
+            clientButton.OnClickAsObservable().Subscribe(_ => SceneManager.LoadScene(gameScene));
 #endif
+        }
     }
 }
