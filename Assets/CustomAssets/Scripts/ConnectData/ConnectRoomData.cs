@@ -6,5 +6,6 @@ namespace ConnectData {
         public string RoomName;
         public string HostName;
         public int MemberNum;
+        public int MaxMemberNum;
     }
 }

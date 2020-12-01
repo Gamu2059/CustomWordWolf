@@ -77,7 +77,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u5168\u89D2\u6587\u5B57\u306715\u6587\u5B57\u304F\u3089\u3044\uFF1F"
+  m_Text: "\u5168\u89D2\u6587\u5B57\u306712\u6587\u5B57\u304F\u3089\u3044\uFF1F"
 --- !u!1 &1595364425
 GameObject:
   m_ObjectHideFlags: 0
@@ -488,7 +488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomNameText: {fileID: 953538080}
   roomMemberNumText: {fileID: 1595364427}
-  joinRoomButton: {fileID: 0}
+  joinRoomButton: {fileID: 5746572317917158942}
 --- !u!1001 &1901508057279118775
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -634,3 +634,15 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1901508057279118775}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5746572317917158942 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6186941567721382825, guid: 88e828846f171af40a284d64230dfb35,
+    type: 3}
+  m_PrefabInstance: {fileID: 1901508057279118775}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -6,16 +6,16 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UniRx;
 
-namespace Title.RoomList {
+namespace Lobby.JoinRoom.RoomList {
     public class JoinRoomElementPresenter : MonoBehaviour {
         [SerializeField]
         private JoinRoomElementView view;
 
-        public event Action<Guid> OnRoomDecided;
+        public event Action<Guid> OnJoinRoomDecidedEvent;
 
         public void Initialize(ConnectRoomData roomData) {
             view.Initialize(roomData);
-            view.JoinRoomButtonObservable.Subscribe(_ => OnRoomDecided?.Invoke(roomData.RoomGuid)).AddTo(gameObject);
+            view.JoinRoomObservable.Subscribe(_ => OnJoinRoomDecidedEvent?.Invoke(roomData.RoomGuid)).AddTo(gameObject);
         }
     }
 }

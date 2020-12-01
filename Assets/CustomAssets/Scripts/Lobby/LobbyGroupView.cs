@@ -1,8 +1,21 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Common;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Lobby {
-    public class LobbyGroupView : MonoBehaviour {
+    public class LobbyGroupView :
+        MonoBehaviour,
+        Initializable {
+        public void Initialize() {
+            
+        }
+
+        public async UniTask ShowAsync() {
+            gameObject.SetActive(true);
+        }
+
+        public async UniTask HideAsync() {
+            gameObject.SetActive(false);
+        }
     }
 }

@@ -81,6 +81,7 @@ namespace Manager {
 
         public override void OnClientDisconnect(NetworkConnection conn) {
             base.OnClientDisconnect(conn);
+            Debug.Log("OnClientDisconnectEvent");
             OnClientDisconnectEvent?.Invoke();
         }
 
@@ -118,6 +119,7 @@ namespace Manager {
         public event Action OnStopClientEvent;
 
         public override void OnStopClient() {
+            Debug.Log("StopClientEvent!");
             OnStopClientEvent?.Invoke();
         }
 

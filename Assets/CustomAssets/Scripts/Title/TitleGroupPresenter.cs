@@ -10,28 +10,28 @@ using UniRx;
 using UnityEngine;
 
 namespace Title {
-    public class TitleGroupPresenter : MonoBehaviour, Initializable, IGroupStateChangeable {
+    public class TitleGroupPresenter :
+        MonoBehaviour,
+        Initializable,
+        IStateChangeable,
+        IStateRequestable<GroupState, IChangeStateArg> {
         [SerializeField]
         private TitleGroupView view;
 
-        private GroupStateMachine stateMachine;
-
         private IDisposable startDisposable;
 
+        public event Func<GroupState, IChangeStateArg, bool> OnStateRequestEvent;
+
         public void Initialize() {
+            view.Initialize();
         }
 
-        public void InjectStateMachine(GroupStateMachine stateMachine) {
-            this.stateMachine = stateMachine;
-        }
-
-        public async UniTask GroupInAsync(IChangeGroupArg arg) {
+        public async UniTask StateInAsync(IChangeStateArg arg) {
             SetViewEvents();
-
             await view.ShowAsync();
         }
 
-        public async UniTask GroupOutAsync() {
+        public async UniTask StateOutAsync() {
             await view.HideAsync();
             DisposeViewEvents();
         }
@@ -46,11 +46,11 @@ namespace Title {
         }
 
         private async void OnClickStart() {
-            var startClientCmd = new StartClient();
-            var (isSuccessConnect, errorCode) = await startClientCmd.StartClientAsync();
+            var connectClient = new ConnectClient();
+            var (isSuccess, errorCode) = await connectClient.ConnectClientAsync();
 
-            if (isSuccessConnect) {
-                stateMachine.RequestChangeState(GroupState.Lobby);
+            if (isSuccess) {
+                OnStateRequestEvent?.Invoke(GroupState.Lobby, null);
             } else {
                 Debug.LogError("サーバとの接続に失敗しました " + errorCode);
             }
