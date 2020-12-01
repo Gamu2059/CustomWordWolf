@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using UnityEngine.UI;
 
 namespace UI.Button {
     public class CustomButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler {
-        [SerializeField]
-        private UnityEngine.UI.Button selfButton;
 
         [SerializeField]
         private RectTransform frontFrame;
@@ -17,7 +16,7 @@ namespace UI.Button {
 
         [SerializeField]
         private float highlightFrontOffset = 15;
-
+        
         [SerializeField]
         private float clickFrontOffset = 0;
 
