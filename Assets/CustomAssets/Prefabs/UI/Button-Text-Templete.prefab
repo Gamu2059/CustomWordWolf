@@ -360,8 +360,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0c4861e541544841aba07d20d98ce6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  baseGraphic: {fileID: 6186941567721382839}
+  backGraphic: {fileID: 6186941567344652549}
+  frontGraphic: {fileID: 6186941566092668223}
+  contentGraphic: {fileID: 6186941567395483863}
+  selfButton: {fileID: 6186941567721382825}
   frontFrame: {fileID: 6186941566092668222}
-  frontImage: {fileID: 6186941566092668223}
   normalFrontOffset: 10
   highlightFrontOffset: 7
   clickFrontOffset: 0
@@ -369,3 +373,13 @@ MonoBehaviour:
   highlightFrontColor: {r: 0.6226415, g: 0.36638266, b: 0.18503025, a: 1}
   tweenDuration: 0.1
   easeType: 9
+  validColor:
+    BaseColor: {r: 0.87, g: 0.67207503, b: 0.5307, a: 1}
+    BackColor: {r: 0.39, g: 0.23984998, b: 0.13259998, a: 1}
+    FrontColor: {r: 0.67, g: 0.41595837, b: 0.23450002, a: 1}
+    ContentColor: {r: 0.2, g: 0.142, b: 0.08400001, a: 1}
+  invalidColor:
+    BaseColor: {r: 0.87058824, g: 0.82082963, b: 0.78570586, a: 1}
+    BackColor: {r: 0.3882353, g: 0.35078552, b: 0.32417646, a: 1}
+    FrontColor: {r: 0.67058825, g: 0.60677665, b: 0.5616177, a: 1}
+    ContentColor: {r: 0.2, g: 0.18525, b: 0.17050001, a: 1}

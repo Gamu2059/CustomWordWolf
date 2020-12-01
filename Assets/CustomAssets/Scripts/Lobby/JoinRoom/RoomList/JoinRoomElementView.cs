@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using ConnectData;
+using UI.Button;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,14 +14,14 @@ namespace Lobby.JoinRoom.RoomList {
 
         [SerializeField]
         private Text hostNameText;
-        
+
         [SerializeField]
         private Text roomMemberNumText;
 
         [SerializeField]
-        private Button joinRoomButton;
+        private CustomButton joinRoomButton;
 
-        public IObservable<Unit> JoinRoomObservable => joinRoomButton.OnClickAsObservable();
+        public IObservable<Unit> JoinRoomObservable => joinRoomButton.Button.OnClickAsObservable();
 
         public void Initialize(ConnectRoomData roomData) {
             roomNameText.text = roomData.RoomName;

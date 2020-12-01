@@ -26,8 +26,8 @@ namespace Manager {
         protected override void OnInitialize() {
             InitializeChild();
             BindState();
-            SetEvents();
-            StateMachine.StateRequestChange(GroupState.Title);
+            InjectStateMachine();
+            StateMachine.RequestChangeState(GroupState.Title);
         }
 
         private void InitializeChild() {
@@ -40,9 +40,9 @@ namespace Manager {
             StateDictionary.Add(GroupState.Lobby, lobbyPresenter);
         }
 
-        private void SetEvents() {
-            titlePresenter.OnStateRequestEvent += StateMachine.StateRequestChange;
-            lobbyPresenter.OnStateRequestEvent += StateMachine.StateRequestChange;
+        private void InjectStateMachine() {
+            titlePresenter.InjectStateMachine(StateMachine);
+            lobbyPresenter.InjectStateMachine(StateMachine);
         }
     }
 }

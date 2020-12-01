@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Common;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using UI.Button;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,12 +12,12 @@ using UnityEngine.UI;
 namespace Title {
     public class TitleGroupView :
         MonoBehaviour,
-        Initializable{
+        Initializable {
         #region Inspector
 
         [Header("Refer")]
         [SerializeField]
-        private Button startButton;
+        private CustomButton startButton;
 
         [SerializeField]
         private Image titleImage;
@@ -32,7 +33,7 @@ namespace Title {
 
         #region Field & Property
 
-        public IObservable<Unit> StartObservable => startButton.OnClickAsObservable();
+        public IObservable<Unit> StartObservable => startButton.Button.OnClickAsObservable();
 
         private RectTransform titleRectT;
 
@@ -44,6 +45,8 @@ namespace Title {
 
         public async UniTask ShowAsync() {
             gameObject.SetActive(true);
+            startButton.Show();
+
             darkCutImage.color = Color.black;
             darkCutImage.raycastTarget = true;
             var tween = darkCutImage.DOColor(Color.clear, fadeInDuration).SetEase(Ease.Linear);

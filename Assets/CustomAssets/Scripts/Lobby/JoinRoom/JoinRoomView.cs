@@ -1,6 +1,7 @@
 ﻿using System;
 using Common;
 using Cysharp.Threading.Tasks;
+using UI.Button;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,36 +9,39 @@ using UnityEngine.UI;
 namespace Lobby.JoinRoom {
     public class JoinRoomView :
         MonoBehaviour,
-        Initializable,
-        IStateChangeable {
+        Initializable {
         [SerializeField]
-        private Button backTitleButton;
+        private CustomButton backTitleButton;
 
         [SerializeField]
-        private Button editPlayerNameButton;
+        private CustomButton editPlayerNameButton;
 
         [SerializeField]
-        private Button updateRoomListButton;
+        private CustomButton updateRoomListButton;
 
         [SerializeField]
-        private Button createRoomButton;
+        private CustomButton createRoomButton;
 
         [SerializeField]
         private Text playerNameText;
 
-        public IObservable<Unit> BackTitleObservable => backTitleButton.OnClickAsObservable();
-        public IObservable<Unit> EditPlayerNameObservable => editPlayerNameButton.OnClickAsObservable();
-        public IObservable<Unit> UpdateRoomListObservable => updateRoomListButton.OnClickAsObservable();
-        public IObservable<Unit> CreateRoomObservable => createRoomButton.OnClickAsObservable();
+        public IObservable<Unit> BackTitleObservable => backTitleButton.Button.OnClickAsObservable();
+        public IObservable<Unit> EditPlayerNameObservable => editPlayerNameButton.Button.OnClickAsObservable();
+        public IObservable<Unit> UpdateRoomListObservable => updateRoomListButton.Button.OnClickAsObservable();
+        public IObservable<Unit> CreateRoomObservable => createRoomButton.Button.OnClickAsObservable();
 
         public void Initialize() {
         }
 
-        public async UniTask StateInAsync(IChangeStateArg arg) {
+        public async UniTask ShowAsync() {
             gameObject.SetActive(true);
+            backTitleButton.Show();
+            editPlayerNameButton.Show();
+            updateRoomListButton.Show();
+            createRoomButton.Show();
         }
 
-        public async UniTask StateOutAsync() {
+        public async UniTask HideAsync() {
             gameObject.SetActive(false);
         }
 

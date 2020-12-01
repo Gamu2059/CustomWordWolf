@@ -15,13 +15,13 @@ namespace Common {
             OnInitialize();
         }
 
-        private async void OnChangeStateEvent(TState nextState, TState oldState, IChangeStateArg arg) {
+        private async void OnChangeStateEvent(TState nextState, TState oldState, IChangeStateArg arg, bool isBack) {
             if (StateDictionary.ContainsKey(oldState)) {
                 await StateDictionary[oldState].StateOutAsync();
             }
 
             if (StateDictionary.ContainsKey(nextState)) {
-                await StateDictionary[nextState].StateInAsync(arg);
+                await StateDictionary[nextState].StateInAsync(arg, isBack);
             }
         }
 

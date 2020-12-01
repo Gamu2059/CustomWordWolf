@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Api;
 using Api.SequenceCommand;
 using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Dialog;
+using Lobby.EditPlayerName;
 using Lobby.JoinRoom;
 using Manager;
+using UniRx;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,51 +19,69 @@ namespace Lobby {
     public class LobbyGroupPresenter :
         StateMachineMonoBehavior<LobbyState>,
         IStateChangeable,
-        IStateRequestable<GroupState, IChangeStateArg> {
+        IStateMachineInjectable<GroupState> {
         [SerializeField]
         private LobbyGroupView view;
 
         [SerializeField]
         private JoinRoomPresenter joinRoomPresenter;
 
-        public event Func<GroupState, IChangeStateArg, bool> OnStateRequestEvent;
+        [SerializeField]
+        private EditPlayerNamePresenter editPlayerNamePresenter;
+
+        private StateMachine<GroupState> parentStateMachine;
 
         protected override void OnInitialize() {
             base.OnInitialize();
             view.Initialize();
-            
-            StateDictionary.Add(LobbyState.JoinRoom, joinRoomPresenter);
+
             InitializeChild();
+            BindState();
+            InjectStateMachine();
         }
 
         private void InitializeChild() {
             joinRoomPresenter.Initialize();
+            editPlayerNamePresenter.Initialize();
         }
 
-        public async UniTask StateInAsync(IChangeStateArg arg) {
-            StateMachine.StateRequestChange(LobbyState.JoinRoom);
-            BindEvents();
+        private void BindState() {
+            StateDictionary.Add(LobbyState.JoinRoom, joinRoomPresenter);
+            StateDictionary.Add(LobbyState.EditPlayerName, editPlayerNamePresenter);
+        }
+
+        private void InjectStateMachine() {
+            joinRoomPresenter.InjectStateMachine(StateMachine);
+            editPlayerNamePresenter.InjectStateMachine(StateMachine);
+        }
+
+        public void InjectStateMachine(StateMachine<GroupState> stateMachine) {
+            parentStateMachine = stateMachine;
+        }
+
+        public async UniTask StateInAsync(IChangeStateArg arg, bool isBack) {
             await view.ShowAsync();
+            BindEvents();
+            StateMachine.RequestChangeState(LobbyState.JoinRoom);
         }
 
         public async UniTask StateOutAsync() {
-            Debug.Log("LobbyOut");
-            await view.HideAsync();
             UnbindEvents();
+            await view.HideAsync();
         }
 
         private void BindEvents() {
-            joinRoomPresenter.OnStateRequestEvent += StateMachine.StateRequestChange;
-
             joinRoomPresenter.OnTitleBackEvent += OnTitleBack;
             joinRoomPresenter.OnJoinRoomDecidedEvent += OnJoinRoomDecided;
+
+            editPlayerNamePresenter.OnPlayerNameEditedEvent += OnPlayerNameEdited;
         }
 
         private void UnbindEvents() {
+            editPlayerNamePresenter.OnPlayerNameEditedEvent -= OnPlayerNameEdited;
+
             joinRoomPresenter.OnJoinRoomDecidedEvent -= OnJoinRoomDecided;
             joinRoomPresenter.OnTitleBackEvent -= OnTitleBack;
-
-            joinRoomPresenter.OnStateRequestEvent -= StateMachine.StateRequestChange;
         }
 
         private async void OnTitleBack() {
@@ -68,7 +89,7 @@ namespace Lobby {
             var (isSuccess, errorCode) = await disconnectClient.DisconnectClientAsync();
 
             if (isSuccess) {
-                var isa = OnStateRequestEvent?.Invoke(GroupState.Title, null);
+                parentStateMachine.RequestChangeState(GroupState.Title);
             } else {
                 Debug.LogError("サーバとの接続に失敗しました " + errorCode);
             }
@@ -79,7 +100,7 @@ namespace Lobby {
             var response = await joinRoomApi.Request(new ConnectData.JoinRoom.Request() {RoomGuid = roomGuid});
 
             if (response.Result == ConnectData.JoinRoom.Result.Succeed) {
-                OnStateRequestEvent?.Invoke(GroupState.Game, null);
+                parentStateMachine.RequestChangeState(GroupState.Game);
                 return;
             }
 
@@ -100,8 +121,8 @@ namespace Lobby {
             var applyPlayerNameApi = new ApplyPlayerNameApi();
             var response = await applyPlayerNameApi.Request(new ApplyPlayerName.Request {PlayerName = playerName});
             if (response.Result == ApplyPlayerName.Result.Succeed) {
-                PlayerPrefsManager.PlayerName = playerName;
-                // view.SetPlayerName(playerName);
+                joinRoomPresenter.SetPlayerName(playerName);
+                StateMachine.RequestBackState();
             }
         }
 

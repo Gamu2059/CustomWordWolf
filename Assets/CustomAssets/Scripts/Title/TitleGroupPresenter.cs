@@ -14,19 +14,22 @@ namespace Title {
         MonoBehaviour,
         Initializable,
         IStateChangeable,
-        IStateRequestable<GroupState, IChangeStateArg> {
+        IStateMachineInjectable<GroupState> {
         [SerializeField]
         private TitleGroupView view;
 
+        private StateMachine<GroupState> parentStateMachine;
         private IDisposable startDisposable;
-
-        public event Func<GroupState, IChangeStateArg, bool> OnStateRequestEvent;
 
         public void Initialize() {
             view.Initialize();
         }
 
-        public async UniTask StateInAsync(IChangeStateArg arg) {
+        public void InjectStateMachine(StateMachine<GroupState> stateMachine) {
+            parentStateMachine = stateMachine;
+        }
+
+        public async UniTask StateInAsync(IChangeStateArg arg, bool isBack) {
             SetViewEvents();
             await view.ShowAsync();
         }
@@ -50,7 +53,7 @@ namespace Title {
             var (isSuccess, errorCode) = await connectClient.ConnectClientAsync();
 
             if (isSuccess) {
-                OnStateRequestEvent?.Invoke(GroupState.Lobby, null);
+                parentStateMachine.RequestChangeState(GroupState.Lobby, null);
             } else {
                 Debug.LogError("サーバとの接続に失敗しました " + errorCode);
             }
