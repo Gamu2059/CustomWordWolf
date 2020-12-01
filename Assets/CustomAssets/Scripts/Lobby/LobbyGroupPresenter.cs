@@ -8,6 +8,7 @@ using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Dialog;
+using Lobby.CreateRoom;
 using Lobby.EditPlayerName;
 using Lobby.JoinRoom;
 using Manager;
@@ -29,6 +30,9 @@ namespace Lobby {
         [SerializeField]
         private EditPlayerNamePresenter editPlayerNamePresenter;
 
+        [SerializeField]
+        private CreateRoomPresenter createRoomPresenter;
+
         private StateMachine<GroupState> parentStateMachine;
 
         protected override void OnInitialize() {
@@ -43,16 +47,19 @@ namespace Lobby {
         private void InitializeChild() {
             joinRoomPresenter.Initialize();
             editPlayerNamePresenter.Initialize();
+            createRoomPresenter.Initialize();
         }
 
         private void BindState() {
             StateDictionary.Add(LobbyState.JoinRoom, joinRoomPresenter);
             StateDictionary.Add(LobbyState.EditPlayerName, editPlayerNamePresenter);
+            StateDictionary.Add(LobbyState.CreateRoom, createRoomPresenter);
         }
 
         private void InjectStateMachine() {
             joinRoomPresenter.InjectStateMachine(StateMachine);
             editPlayerNamePresenter.InjectStateMachine(StateMachine);
+            createRoomPresenter.InjectStateMachine(StateMachine);
         }
 
         public void InjectStateMachine(StateMachine<GroupState> stateMachine) {
@@ -73,13 +80,13 @@ namespace Lobby {
         private void BindEvents() {
             joinRoomPresenter.OnTitleBackEvent += OnTitleBack;
             joinRoomPresenter.OnJoinRoomDecidedEvent += OnJoinRoomDecided;
-
             editPlayerNamePresenter.OnPlayerNameEditedEvent += OnPlayerNameEdited;
+            createRoomPresenter.OnCreateRoomNameDecidedEvent += OnCreateRoomNameDecided;
         }
 
         private void UnbindEvents() {
+            createRoomPresenter.OnCreateRoomNameDecidedEvent -= OnCreateRoomNameDecided;
             editPlayerNamePresenter.OnPlayerNameEditedEvent -= OnPlayerNameEdited;
-
             joinRoomPresenter.OnJoinRoomDecidedEvent -= OnJoinRoomDecided;
             joinRoomPresenter.OnTitleBackEvent -= OnTitleBack;
         }
@@ -126,10 +133,11 @@ namespace Lobby {
             }
         }
 
-        private async void OnRoomNameDecided(string roomName) {
+        private async void OnCreateRoomNameDecided(string roomName) {
             var createRoomApi = new CreateRoomApi();
-            var response = await createRoomApi.Request(new CreateRoom.Request {RoomName = roomName});
-            if (response.Result == CreateRoom.Result.Succeed) {
+            var response = await createRoomApi.Request(new ConnectData.CreateRoom.Request {RoomName = roomName});
+            if (response.Result == ConnectData.CreateRoom.Result.Succeed) {
+                parentStateMachine.RequestChangeState(GroupState.Game, null);
             }
         }
     }
