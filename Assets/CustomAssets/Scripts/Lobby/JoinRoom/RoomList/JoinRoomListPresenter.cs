@@ -37,8 +37,8 @@ namespace Lobby.JoinRoom.RoomList {
             view.SetActiveNoRoom(true);
 
             var roomListApi = new RoomListApi();
-            var roomListResponse = await roomListApi.Request(new ConnectData.RoomList.Request());
-            if (roomListResponse.Result != ConnectData.RoomList.Result.Succeed) {
+            var roomListResponse = await roomListApi.Request(new ConnectData.GetRoomList.Request());
+            if (roomListResponse.Result != ConnectData.GetRoomList.Result.Succeed) {
                 return;
             }
 

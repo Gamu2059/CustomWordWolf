@@ -10,11 +10,11 @@ namespace Api {
         }
 
         protected override void Bind(CustomNetworkManager networkManager) {
-            networkManager.OnChangeHostReceived += Invoke;
+            networkManager.OnUpdateMemberReceiveEvent += Invoke;
         }
 
         protected override void Unbind(CustomNetworkManager networkManager) {
-            networkManager.OnChangeHostReceived -= Invoke;
+            networkManager.OnUpdateMemberReceiveEvent -= Invoke;
         }
     }
 }

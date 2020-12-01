@@ -34,10 +34,10 @@ namespace Game {
         public void StartGame(StartGame.SendRoom data) {
             State = GameState.PlayGame;
             
-            remainTime.Value = data.RemainTime;
+            remainTime.Value = data.GameTime;
             timer = Observable
                 .Timer(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(1))
-                .Subscribe(elapsedTime => remainTime.Value = data.RemainTime - (int) elapsedTime);
+                .Subscribe(elapsedTime => remainTime.Value = data.GameTime - (int) elapsedTime);
         }
 
         public void TimeOverGame(TimeOver.SendRoom data) {

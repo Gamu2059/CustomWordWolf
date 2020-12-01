@@ -63,7 +63,7 @@ namespace Game {
 
         private async UniTaskVoid ConnectInitializationAsync() {
             var loadGameSceneApi = new LoadGameSceneApi();
-            var response = await loadGameSceneApi.Request(new LoadGameScene.Request());
+            var response = await loadGameSceneApi.Request(new GetRoomDetailData.Request());
             model.SetHost(response.IsHost);
             if (model.IsHost) {
                 view.SetActiveStartButton(true);

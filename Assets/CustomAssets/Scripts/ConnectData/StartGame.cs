@@ -8,17 +8,21 @@ namespace ConnectData {
 
         public struct Response : NetworkMessage {
             public Result Result;
+            public Exception Exception;
         }
 
         public enum Result {
+            FailureUnknown,
             Succeed,
-            Failure,
+            FailureNonExistPlayer,
+            FailureNonHost,
+            FailurePlaying,
         }
 
         public struct SendRoom : NetworkMessage {
             public string Theme;
-            public int RemainTime;
-            public DateTime CountStartDateTime;
+            public int GameTime;
+            public DateTime GameStartDateTime;
         }
     }
 }

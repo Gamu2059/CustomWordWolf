@@ -2,17 +2,17 @@
 using Manager;
 
 namespace Api {
-    public class LoadGameSceneApi : ApiBase<LoadGameScene.Request, LoadGameScene.Response> {
-        protected override void OnRequest(CustomNetworkManager networkManager, LoadGameScene.Request request) {
-            networkManager.RequestLoadGameScene(request);
+    public class LoadGameSceneApi : ApiBase<GetRoomDetailData.Request, GetRoomDetailData.Response> {
+        protected override void OnRequest(CustomNetworkManager networkManager, GetRoomDetailData.Request request) {
+            networkManager.RequestGetRoomDetailData(request);
         }
 
         protected override void BindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnLoadGameSceneResponse += OnResponse;
+            networkManager.OnGetRoomDetailDataResponseEvent += OnGetResponseEventEventEventEventEventEventEvent;
         }
 
         protected override void UnbindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnLoadGameSceneResponse -= OnResponse;
+            networkManager.OnGetRoomDetailDataResponseEvent -= OnGetResponseEventEventEventEventEventEventEvent;
         }
     }
 }

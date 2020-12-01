@@ -19,19 +19,17 @@ namespace ManagedData {
             return roomDictionary.Values.ToList();
         }
 
-        public RoomData CreateRoomData(Guid guid, string roomName, string hostName, uint hostNetId) {
+        public RoomData CreateRoomData(PlayerDataHolder playerDataHolder, NetworkConnection connection,
+            ConstArg constArg, VariableArg variableArg) {
             CheckDictionary();
-            if (ExistRoomByGuid(guid)) {
-                return null;
+
+            var guid = Guid.NewGuid();
+            while (ExistRoomByGuid(guid)) {
+                guid = Guid.NewGuid();
             }
 
-            var roomData = new RoomData {
-                RoomGuid = guid,
-                DateTime = DateTime.Now,
-                CurrentHostNetId = hostNetId,
-                RoomName = roomName,
-                HostName = hostName,
-            };
+            constArg.RoomGuid = guid;
+            var roomData = new RoomData(playerDataHolder, connection, constArg, variableArg);
             roomDictionary.Add(guid, roomData);
             return roomData;
         }
@@ -57,7 +55,7 @@ namespace ManagedData {
 
         public RoomData GetRoomDataByHostPlayer(uint hostPlayerNetId) {
             CheckDictionary();
-            return roomDictionary.Values.FirstOrDefault(d => d.CurrentHostNetId == hostPlayerNetId);
+            return roomDictionary.Values.FirstOrDefault(d => d.HostNetId == hostPlayerNetId);
         }
 
         public bool ExistRoomByGuid(Guid guid) {
@@ -72,7 +70,7 @@ namespace ManagedData {
 
         public bool ExistRoomByHostPlayer(uint hostPlayerNetId) {
             CheckDictionary();
-            return roomDictionary.Values.Any(d => d.CurrentHostNetId == hostPlayerNetId);
+            return roomDictionary.Values.Any(d => d.HostNetId == hostPlayerNetId);
         }
     }
 }

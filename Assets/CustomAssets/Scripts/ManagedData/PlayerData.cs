@@ -5,10 +5,10 @@ namespace ManagedData {
         public string PlayerName { get; private set; }
 
         public PlayerData(string playerName) {
-            UpdatePlayerName(playerName);
+            ApplyPlayerName(playerName);
         }
 
-        public void UpdatePlayerName(string playerName) {
+        public void ApplyPlayerName(string playerName) {
             PlayerName = playerName;
         }
     }

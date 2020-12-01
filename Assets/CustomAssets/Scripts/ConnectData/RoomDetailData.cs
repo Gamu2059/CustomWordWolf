@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ConnectData {
-    public struct ConnectRoomData {
+    public struct RoomDetailData {
         public Guid RoomGuid;
         public string RoomName;
-        public string HostName;
-        public int MemberNum;
         public int MaxMemberNum;
+        public List<PlayerSimpleData> PlayerDataList;
     }
 }

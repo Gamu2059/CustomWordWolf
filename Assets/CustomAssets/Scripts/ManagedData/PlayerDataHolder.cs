@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Mirror;
 using UnityEngine;
 
@@ -33,6 +34,20 @@ namespace ManagedData {
             }
 
             return null;
+        }
+
+        public PlayerData GetPlayerData(uint netId) {
+            CheckDictionary();
+            var pair = playerDictionary.FirstOrDefault(p => p.Key.netId == netId);
+            return pair.Key == null ? null : pair.Value;
+        }
+
+        /// <summary>
+        /// プレイヤーが存在するかどうかを取得する。
+        /// </summary>
+        public bool ExistPlayerData(NetworkIdentity identity) {
+            CheckDictionary();
+            return playerDictionary.ContainsKey(identity);
         }
     }
 }

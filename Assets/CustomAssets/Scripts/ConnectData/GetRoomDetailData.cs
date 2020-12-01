@@ -1,9 +1,8 @@
 ﻿using System;
-using ManagedData;
 using Mirror;
 
 namespace ConnectData {
-    public class JoinRoom {
+    public class GetRoomDetailData {
         public struct Request : NetworkMessage {
             public Guid RoomGuid;
         }
@@ -11,17 +10,15 @@ namespace ConnectData {
         public struct Response : NetworkMessage {
             public Result Result;
             public Exception Exception;
+            public bool IsHost;
+            public RoomDetailData RoomData;
         }
         
         public enum Result {
             FailureUnknown,
             Succeed,
             FailureNonExistPlayer,
-            FailureAlreadyJoinRoom,
             FailureNonExistRoom,
-            FailureFullMember,
-            FailurePlaying,
-            FailureJoinRoom,
         }
     }
 }

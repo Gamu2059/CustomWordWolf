@@ -1,4 +1,5 @@
-﻿using ManagedData;
+﻿using System;
+using ManagedData;
 using Mirror;
 
 namespace ConnectData {
@@ -9,12 +10,14 @@ namespace ConnectData {
 
         public struct Response : NetworkMessage {
             public Result Result;
-            public ConnectRoomData CreatedRoomData;
+            public Exception Exception;
         }
         
         public enum Result {
+            FailureUnknown,
             Succeed,
-            Failure,
+            FailureNonExistPlayer,
+            FailureMultipleRoomHost,
         }
     }
 }
