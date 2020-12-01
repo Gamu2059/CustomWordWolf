@@ -10,14 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Manager {
-    public partial class CustomNetworkManager : NetworkManager {
-        #region Inspector
-
-        [SerializeField]
-        private string titleScene;
-
-        #endregion
-
+    public class CustomNetworkManager : NetworkManager {
         #region Field
 
         private PlayerDataHolder playerDataHolder;
@@ -28,7 +21,7 @@ namespace Manager {
             ("CyberAgent", "DeNA"),
             ("ななさん", "さとこさん"),
         };
-        
+
         #endregion
 
         #region Server System Callbacks
@@ -77,57 +70,55 @@ namespace Manager {
 
         #region Client System Callback
 
+        public event Action OnClientConnectEvent;
+
         public override void OnClientConnect(NetworkConnection conn) {
             base.OnClientConnect(conn);
-            Debug.Log("OnClientConnect");
+            OnClientConnectEvent?.Invoke();
         }
+
+        public event Action OnClientDisconnectEvent;
 
         public override void OnClientDisconnect(NetworkConnection conn) {
             base.OnClientDisconnect(conn);
-            Debug.Log("OnClientDisconnect");
+            OnClientDisconnectEvent?.Invoke();
         }
+
+        public event Action<int> OnClientErrorEvent;
 
         public override void OnClientError(NetworkConnection conn, int errorCode) {
             base.OnClientError(conn, errorCode);
-            Debug.Log("OnClientError");
-        }
-
-        public override void OnClientNotReady(NetworkConnection conn) {
-            base.OnClientNotReady(conn);
-            Debug.Log("OnClientNotReady");
-        }
-
-        public override void OnClientChangeScene(string newSceneName, SceneOperation sceneOperation,
-            bool customHandling) {
-            base.OnClientChangeScene(newSceneName, sceneOperation, customHandling);
-            Debug.Log("OnClientChangeScene");
-        }
-
-        public override void OnClientSceneChanged(NetworkConnection conn) {
-            base.OnClientSceneChanged(conn);
-            Debug.Log("OnClientSceneChanged");
+            OnClientErrorEvent?.Invoke(errorCode);
         }
 
         #endregion
 
         #region Start & Stop callbacks
 
+        public event Action OnStartServerEvent;
+
         public override void OnStartServer() {
-            Debug.Log("OnStartServer");
             InitializeServer();
+            OnStartServerEvent?.Invoke();
         }
 
-        public override void OnStartClient() {
-            Debug.Log("OnStartClient");
-            InitializeClient();
-        }
+        public event Action OnStopServerEvent;
 
         public override void OnStopServer() {
-            Debug.Log("OnStopServer");
+            OnStopServerEvent?.Invoke();
         }
 
+        public event Action OnStartClientEvent;
+
+        public override void OnStartClient() {
+            InitializeClient();
+            OnStartClientEvent?.Invoke();
+        }
+
+        public event Action OnStopClientEvent;
+
         public override void OnStopClient() {
-            Debug.Log("OnStopClient");
+            OnStopClientEvent?.Invoke();
         }
 
         #endregion
@@ -161,8 +152,6 @@ namespace Manager {
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
             NetworkClient.RegisterHandler<TimeOver.SendRoom>(ReceiveTimeOver);
             NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
-
-            SceneManager.LoadScene(titleScene);
         }
 
         #region Server Request

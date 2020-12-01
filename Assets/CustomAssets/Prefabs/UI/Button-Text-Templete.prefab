@@ -361,8 +361,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   frontFrame: {fileID: 6186941566092668222}
+  frontImage: {fileID: 6186941566092668223}
   normalFrontOffset: 10
   highlightFrontOffset: 7
   clickFrontOffset: 0
+  normalFrontColor: {r: 0.67, g: 0.41595837, b: 0.23450002, a: 1}
+  highlightFrontColor: {r: 0.6226415, g: 0.36638266, b: 0.18503025, a: 1}
   tweenDuration: 0.1
   easeType: 9
