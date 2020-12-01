@@ -9,11 +9,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Title {
-    public class TitleGroupView : MonoBehaviour, Initializable {
+    public class TitleGroupView :
+        MonoBehaviour,
+        Initializable{
         #region Inspector
 
         [Header("Refer")]
-        
         [SerializeField]
         private Button startButton;
 
@@ -24,10 +25,9 @@ namespace Title {
         private Image darkCutImage;
 
         [Header("Param")]
-
         [SerializeField]
         private float fadeInDuration = 1;
-        
+
         #endregion
 
         #region Field & Property

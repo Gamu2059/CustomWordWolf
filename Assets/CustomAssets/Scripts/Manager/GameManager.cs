@@ -4,55 +4,45 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Common;
 using Guide;
+using Lobby;
 using Title;
 using UnityEngine;
 
 namespace Manager {
-    public class GameManager : MonoBehaviour {
-
+    public class GameManager : StateMachineMonoBehavior<GroupState> {
         [SerializeField]
         private TitleGroupPresenter titlePresenter;
 
         [SerializeField]
+        private LobbyGroupPresenter lobbyPresenter;
+
+        [SerializeField]
         private GuideGroupPresenter guidePresenter;
 
-        private GroupStateMachine stateMachine;
-
-        private Dictionary<GroupState, IGroupStateChangeable> stateDictionary;
-        
         private void Start() {
             Initialize();
-            InjectStateMachine();
+        }
+
+        protected override void OnInitialize() {
+            InitializeChild();
+            BindState();
             SetEvents();
-            
-            stateMachine.RequestChangeState(GroupState.Title);
+            StateMachine.StateRequestChange(GroupState.Title);
         }
 
-        private void Initialize() {
-            stateMachine = new GroupStateMachine();
-            stateDictionary = new Dictionary<GroupState, IGroupStateChangeable> {
-                {GroupState.Title, titlePresenter},
-                // {GroupState.Guide, guidePresenter},
-            };
+        private void InitializeChild() {
             titlePresenter.Initialize();
+            lobbyPresenter.Initialize();
         }
 
-        private void InjectStateMachine() {
-            titlePresenter.InjectStateMachine(stateMachine);
+        private void BindState() {
+            StateDictionary.Add(GroupState.Title, titlePresenter);
+            StateDictionary.Add(GroupState.Lobby, lobbyPresenter);
         }
 
         private void SetEvents() {
-            stateMachine.OnChangeState += OnChangeState;
-        }
-
-        private async void OnChangeState(GroupState nextState, GroupState oldState, IChangeGroupArg arg) {
-            if (stateDictionary.ContainsKey(oldState)) {
-                await stateDictionary[oldState].GroupOutAsync();
-            }
-
-            if (stateDictionary.ContainsKey(nextState)) {
-                await stateDictionary[nextState].GroupInAsync(arg);
-            }
+            titlePresenter.OnStateRequestEvent += StateMachine.StateRequestChange;
+            lobbyPresenter.OnStateRequestEvent += StateMachine.StateRequestChange;
         }
     }
 }

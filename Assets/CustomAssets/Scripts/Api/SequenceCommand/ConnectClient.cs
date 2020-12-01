@@ -4,41 +4,41 @@ using Mirror;
 using UnityEngine;
 
 namespace Api.SequenceCommand {
-    public class StartClient {
-        private bool isDoneConnect;
-        private bool isSuccessConnect;
+    public class ConnectClient {
+        private bool isDone;
+        private bool isSuccess;
         private int errorCode;
 
-        public async UniTask<(bool, int)> StartClientAsync() {
+        public async UniTask<(bool, int)> ConnectClientAsync() {
             var networkManager = NetworkManager.singleton as CustomNetworkManager;
             if (networkManager == null) {
                 Debug.LogError("適切なネットワークマネージャではありません");
                 return (false, -1);
             }
 
-            isDoneConnect = false;
+            isDone = false;
 
             networkManager.OnClientConnectEvent += OnConnectSucceed;
             networkManager.OnClientErrorEvent += OnConnectError;
             networkManager.StartClient();
 
-            await UniTask.WaitUntil(() => isDoneConnect);
+            await UniTask.WaitUntil(() => isDone);
 
             networkManager.OnClientConnectEvent -= OnConnectSucceed;
             networkManager.OnClientErrorEvent -= OnConnectError;
 
-            return (isSuccessConnect, errorCode);
+            return (isSuccess, errorCode);
         }
 
         private void OnConnectSucceed() {
-            isDoneConnect = true;
-            isSuccessConnect = true;
+            isDone = true;
+            isSuccess = true;
             errorCode = -1;
         }
 
         private void OnConnectError(int errorCode) {
-            isDoneConnect = true;
-            isSuccessConnect = false;
+            isDone = true;
+            isSuccess = false;
             this.errorCode = errorCode;
         }
     }

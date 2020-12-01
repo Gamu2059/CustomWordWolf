@@ -3,6 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Common {
-    public interface IChangeGroupArg {
+    public interface IChangeStateArg {
     }
 }
