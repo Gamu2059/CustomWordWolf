@@ -2,7 +2,7 @@
 
 namespace Common {
     public interface IStateChangeable {
-        UniTask StateInAsync(IChangeStateArg arg);
+        UniTask StateInAsync(IChangeStateArg arg, bool isBack);
         UniTask StateOutAsync();
     }
 }

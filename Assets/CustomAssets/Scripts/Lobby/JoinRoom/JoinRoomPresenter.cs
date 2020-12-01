@@ -1,6 +1,7 @@
 ﻿using System;
 using Common;
 using Cysharp.Threading.Tasks;
+using Lobby.EditPlayerName;
 using Lobby.JoinRoom.RoomList;
 using UnityEngine;
 using UniRx;
@@ -11,27 +12,36 @@ namespace Lobby.JoinRoom {
         MonoBehaviour,
         Initializable,
         IStateChangeable,
-        IStateRequestable<LobbyState, IChangeStateArg> {
+        IStateMachineInjectable<LobbyState> {
         [SerializeField]
         private JoinRoomView view;
 
         [SerializeField]
         private JoinRoomListPresenter listPresenter;
 
+        private StateMachine<LobbyState> parentStateMachine;
+        private JoinRoomModel model;
         private CompositeDisposable viewDisposable;
+        private CompositeDisposable modelDisposable;
 
-        public event Func<LobbyState, IChangeStateArg, bool> OnStateRequestEvent;
         public event Action OnTitleBackEvent;
         public event Action<Guid> OnJoinRoomDecidedEvent;
 
         public void Initialize() {
             view.Initialize();
+            model = new JoinRoomModel();
+
             listPresenter.Initialize();
         }
 
-        public async UniTask StateInAsync(IChangeStateArg arg) {
-            await view.StateInAsync(arg);
+        public void InjectStateMachine(StateMachine<LobbyState> stateMachine) {
+            parentStateMachine = stateMachine;
+        }
+
+        public async UniTask StateInAsync(IChangeStateArg arg, bool isBack) {
+            await view.ShowAsync();
             SetViewEvents();
+            SetModelEvents();
             BindEvents();
 
             listPresenter.UpdateRoomList().Forget();
@@ -39,8 +49,9 @@ namespace Lobby.JoinRoom {
 
         public async UniTask StateOutAsync() {
             UnbindEvents();
+            DisposeModelEvents();
             DisposeViewEvents();
-            await view.StateOutAsync();
+            await view.HideAsync();
         }
 
         private void SetViewEvents() {
@@ -49,13 +60,21 @@ namespace Lobby.JoinRoom {
                     .Subscribe(_ => OnTitleBackEvent?.Invoke())
                     .AddTo(gameObject),
                 view.EditPlayerNameObservable
-                    .Subscribe(_ => OnStateRequestEvent(LobbyState.EditPlayerName, null))
+                    .Subscribe(_ => EditPlayerName())
                     .AddTo(gameObject),
                 view.UpdateRoomListObservable
                     .Subscribe(_ => UpdateRoomList())
                     .AddTo(gameObject),
                 view.CreateRoomObservable
-                    .Subscribe(_ => OnStateRequestEvent(LobbyState.CreateRoom, null))
+                    .Subscribe(_ => parentStateMachine.RequestChangeState(LobbyState.CreateRoom))
+                    .AddTo(gameObject)
+            );
+        }
+
+        private void SetModelEvents() {
+            modelDisposable = new CompositeDisposable(
+                model.PlayerNameObservable
+                    .Subscribe(view.SetPlayerName)
                     .AddTo(gameObject)
             );
         }
@@ -69,6 +88,11 @@ namespace Lobby.JoinRoom {
             viewDisposable = null;
         }
 
+        private void DisposeModelEvents() {
+            modelDisposable?.Dispose();
+            modelDisposable = null;
+        }
+
         private void UnbindEvents() {
             listPresenter.OnJoinRoomDecidedEvent -= OnJoinRoomDecided;
         }
@@ -77,8 +101,17 @@ namespace Lobby.JoinRoom {
             OnJoinRoomDecidedEvent?.Invoke(guid);
         }
 
+        private void EditPlayerName() {
+            var arg = new EditPlayerNameArg { PlayerName = model.PlayerName};
+            parentStateMachine.RequestChangeState(LobbyState.EditPlayerName, arg);
+        }
+
         public void UpdateRoomList() {
             listPresenter.UpdateRoomList().Forget();
+        }
+
+        public void SetPlayerName(string playerName) {
+            model.SetPlayerName(playerName);
         }
     }
 }
