@@ -145,8 +145,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -67.499985, y: 0}
-  m_SizeDelta: {x: -184.99997, y: -40}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -50, y: -40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2145650234497173024
 CanvasRenderer:
@@ -177,12 +177,12 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 844cc21e6caaa7647bf7ee796d270fa7, type: 3}
-    m_FontSize: 30
+    m_FontSize: 40
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 3
     m_MaxSize: 40
-    m_Alignment: 3
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -362,7 +362,7 @@ PrefabInstance:
     - target: {fileID: 6186941567721382836, guid: 88e828846f171af40a284d64230dfb35,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6186941567721382837, guid: 88e828846f171af40a284d64230dfb35,
         type: 3}
@@ -650,6 +650,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: TextBox-Voted
+      objectReference: {fileID: 0}
+    - target: {fileID: 4186921212643809884, guid: 99f24dee2f37c214f9642eb48c42372a,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4852707328738309567, guid: 99f24dee2f37c214f9642eb48c42372a,
         type: 3}
