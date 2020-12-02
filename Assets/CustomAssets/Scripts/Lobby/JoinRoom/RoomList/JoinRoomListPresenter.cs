@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using Api;
+using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Lobby.JoinRoom.RoomList {
-    public class JoinRoomListPresenter : MonoBehaviour {
+    public class JoinRoomListPresenter : MonoBehaviour, Initializable {
         [SerializeField]
         private JoinRoomListView view;
 

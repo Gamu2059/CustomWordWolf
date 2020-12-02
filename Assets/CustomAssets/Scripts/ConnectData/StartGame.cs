@@ -11,18 +11,18 @@ namespace ConnectData {
             public Exception Exception;
         }
 
+        public struct SendRoom : NetworkMessage {
+            public string Theme;
+            public int GameTime;
+            public DateTime GameStartDateTime;
+        }
+
         public enum Result {
             FailureUnknown,
             Succeed,
             FailureNonExistPlayer,
             FailureNonHost,
             FailurePlaying,
-        }
-
-        public struct SendRoom : NetworkMessage {
-            public string Theme;
-            public int GameTime;
-            public DateTime GameStartDateTime;
         }
     }
 }

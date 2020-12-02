@@ -1,10 +1,10 @@
 ﻿using Mirror;
 
 namespace ConnectData {
-    public class RoomUpdate {
+    public class UpdateMember {
         public struct SendRoom : NetworkMessage {
-            public RoomDetailData RoomData;
             public bool IsHost;
+            public RoomDetailData RoomData;
         }
     }
 }

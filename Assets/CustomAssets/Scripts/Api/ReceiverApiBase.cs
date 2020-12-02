@@ -1,6 +1,7 @@
 ﻿using System;
 using Manager;
 using Mirror;
+using UnityEngine;
 
 namespace Api {
     public abstract class ReceiverApiBase<TSendData> : IDisposable where TSendData : NetworkMessage {

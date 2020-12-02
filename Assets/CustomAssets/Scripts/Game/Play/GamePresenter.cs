@@ -57,12 +57,12 @@ namespace Game {
         }
 
         private void BindServerReceiveEvents() {
-            changeHostApi = new ChangeHostReceiver(OnChangeHostReceived);
+            // changeHostApi = new UpdateMemberReceiver(OnChangeHostReceived);
             startGameApi = new StartGameReceiver(OnStartGameReceived);
         }
 
         private async UniTaskVoid ConnectInitializationAsync() {
-            var loadGameSceneApi = new LoadGameSceneApi();
+            var loadGameSceneApi = new GetRoomDetailApi();
             var response = await loadGameSceneApi.Request(new GetRoomDetailData.Request());
             model.SetHost(response.IsHost);
             if (model.IsHost) {
@@ -93,13 +93,13 @@ namespace Game {
             Debug.Log("投票 " + response.Result);
         }
 
-        private void OnChangeHostReceived(ChangeHost.SendPlayer data) {
-            model.SetHost(true);
-            view.SetActiveStartButton(true);
-            view.StartGameButtonObservable
-                .Subscribe(_ => OnGameStartAsync())
-                .AddTo(gameObject);
-        }
+        // private void OnChangeHostReceived(UpdateMember.SendPlayer data) {
+        //     model.SetHost(true);
+        //     view.SetActiveStartButton(true);
+        //     view.StartGameButtonObservable
+        //         .Subscribe(_ => OnGameStartAsync())
+        //         .AddTo(gameObject);
+        // }
 
         private void OnStartGameReceived(StartGame.SendRoom data) {
             model.StartGame(data);

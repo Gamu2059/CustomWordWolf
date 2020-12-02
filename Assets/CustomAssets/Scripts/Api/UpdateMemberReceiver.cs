@@ -5,8 +5,8 @@ using Manager;
 using Mirror;
 
 namespace Api {
-    public class ChangeHostReceiver : ReceiverApiBase<ChangeHost.SendPlayer> {
-        public ChangeHostReceiver(Action<ChangeHost.SendPlayer> action) : base(action) {
+    public class UpdateMemberReceiver : ReceiverApiBase<UpdateMember.SendRoom> {
+        public UpdateMemberReceiver(Action<UpdateMember.SendRoom> action) : base(action) {
         }
 
         protected override void Bind(CustomNetworkManager networkManager) {

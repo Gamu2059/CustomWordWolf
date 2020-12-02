@@ -1,18 +1,24 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Common;
+using ConnectData;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UniRx;
 
-public class PlayerElementPresenter : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+namespace Game.PlayerList {
+    public class PlayerElementPresenter : MonoBehaviour {
+        [SerializeField]
+        private PlayerElementView view;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public event Action<int> VotePlayerEvent;
+
+        public void Initialize(PlayerSimpleData data) {
+            view.Initialize(data.PlayerName);
+            view.VoteObservable
+                .Subscribe(_ => VotePlayerEvent?.Invoke(data.PlayerConnectionId))
+                .AddTo(gameObject);
+        }
     }
 }

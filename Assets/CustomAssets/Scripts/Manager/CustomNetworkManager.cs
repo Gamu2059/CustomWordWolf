@@ -21,9 +21,21 @@ namespace Manager {
         [SerializeField]
         private int defaultGameTime;
 
-        [Range(1, 3)]
+        [Range(1, 4)]
         [SerializeField]
         private int defaultWolfNum;
+
+        [SerializeField]
+        private int gameTimeResolution = 30;
+
+        [SerializeField]
+        private int wolfNumResolution = 1;
+
+        [SerializeField]
+        private Vector2Int gameTimeRange = new Vector2Int(60, 600);
+
+        [SerializeField]
+        private Vector2Int wolfNumRange = new Vector2Int(1, 4);
 
         #endregion
 
@@ -128,6 +140,7 @@ namespace Manager {
             NetworkServer.RegisterHandler<CreateRoom.Request>(RequestedCreateRoom);
             NetworkServer.RegisterHandler<GetRoomList.Request>(RequestedGetRoomList);
             NetworkServer.RegisterHandler<JoinRoom.Request>(RequestedJoinRoom);
+            NetworkServer.RegisterHandler<LeaveRoom.Request>(RequestedLeaveRoom);
 
             NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
             NetworkServer.RegisterHandler<VotePlayer.Request>(RequestedVotePlayer);
@@ -140,10 +153,12 @@ namespace Manager {
             NetworkClient.RegisterHandler<CreateRoom.Response>(ResponseCreateRoom);
             NetworkClient.RegisterHandler<GetRoomList.Response>(ResponseGetRoomList);
             NetworkClient.RegisterHandler<JoinRoom.Response>(ResponseJoinRoom);
+            NetworkClient.RegisterHandler<LeaveRoom.Response>(ResponseLeaveRoom);
+
             NetworkClient.RegisterHandler<StartGame.Response>(ResponseStartGame);
             NetworkClient.RegisterHandler<VotePlayer.Response>(ResponseVotePlayer);
 
-            NetworkClient.RegisterHandler<ChangeHost.SendPlayer>(ReceiveUpdateMember);
+            NetworkClient.RegisterHandler<UpdateMember.SendRoom>(ReceiveUpdateMember);
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
             NetworkClient.RegisterHandler<TimeOver.SendRoom>(ReceiveTimeOver);
             NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
@@ -323,14 +338,19 @@ namespace Manager {
                 var constArg = new ConstArg();
                 constArg.RoomName = request.RoomName;
                 constArg.MaxMemberNum = defaultMaxRoomMemberNum;
+                constArg.GameTimeResolution = gameTimeResolution;
+                constArg.WolfNumResolution = wolfNumResolution;
+                constArg.GameTimeRange = gameTimeRange;
+                constArg.WolfNumRange = wolfNumRange;
                 constArg.ThemeUnitList = themeList;
 
                 var variableArg = new VariableArg();
                 variableArg.GameTime = defaultGameTime;
                 variableArg.WolfNum = defaultWolfNum;
 
-                roomDataHolder.CreateRoomData(playerDataHolder, connection, constArg, variableArg);
+                var roomData = roomDataHolder.CreateRoomData(playerDataHolder, connection, constArg, variableArg);
                 msg.Result = CreateRoom.Result.Succeed;
+                msg.RoomGuid = roomData.RoomGuid;
                 connection.Send(msg);
             } catch (Exception e) {
                 Debug.LogErrorFormat("[RequestedCreateRoom] 予期せぬエラーが発生しました\nid : {0}", id);
@@ -343,7 +363,7 @@ namespace Manager {
 
         #endregion
 
-        #region Send Update Room Member
+        #region Send Room Update Member
 
         /// <summary>
         /// サーバから部屋のメンバー更新を通知する。
@@ -351,16 +371,16 @@ namespace Manager {
         private void SendRoomUpdateMember(RoomData roomData) {
             var roomDetailData = roomData.CreateRoomDetailData();
             foreach (var member in roomData.GetAllMemberConnection()) {
-                var msg = new RoomUpdate.SendRoom();
+                var msg = new UpdateMember.SendRoom();
                 msg.RoomData = roomDetailData;
                 msg.IsHost = member.connectionId == roomData.HostConnectionId;
                 member.Send(msg);
             }
         }
 
-        public event Action<ChangeHost.SendPlayer> OnUpdateMemberReceiveEvent;
+        public event Action<UpdateMember.SendRoom> OnUpdateMemberReceiveEvent;
 
-        private void ReceiveUpdateMember(NetworkConnection connection, ChangeHost.SendPlayer data) {
+        private void ReceiveUpdateMember(NetworkConnection connection, UpdateMember.SendRoom data) {
             OnUpdateMemberReceiveEvent?.Invoke(data);
         }
 
@@ -575,6 +595,8 @@ namespace Manager {
                 msg.Result = GetRoomDetailData.Result.Succeed;
                 msg.IsHost = id == roomData.HostConnectionId;
                 msg.RoomData = roomData.CreateRoomDetailData();
+                msg.GameTime = roomData.VariableArg.GameTime;
+                msg.WolfNum = roomData.VariableArg.WolfNum;
                 connection.Send(msg);
             } catch (Exception e) {
                 Debug.LogErrorFormat("[RequestedGetRoomDetailData] 予期せぬエラーが発生しました\nid : {0}", id);
@@ -583,6 +605,190 @@ namespace Manager {
                 msg.Exception = e;
                 connection.Send(msg);
             }
+        }
+
+        #endregion
+
+        #region Request Change Game Time
+
+        /// <summary>
+        /// 制限時間を変更する。
+        /// </summary>
+        public void RequestChangeGameTime(ChangeGameTime.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        public event Action<ChangeGameTime.Response> OnChangeGameTimeResponseEvent;
+
+        private void ResponseChangeGameTime(NetworkConnection connection, ChangeGameTime.Response response) {
+            OnChangeGameTimeResponseEvent?.Invoke(response);
+        }
+
+        /// <summary>
+        /// 制限時間を変更する。
+        /// </summary>
+        private void RequestedChangeGameTime(NetworkConnection connection, ChangeGameTime.Request request) {
+            var msg = new ChangeGameTime.Response();
+            var id = connection.connectionId;
+            RoomData roomData;
+
+            try {
+                // プレイヤーが存在しているかどうかチェック
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedChangeGameTime] 存在しないプレイヤーが指定されました\nid : {0}", id);
+                    msg.Result = ChangeGameTime.Result.FailureNonExistPlayer;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // 部屋が存在しているかどうかチェック
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedChangeGameTime] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
+                    msg.Result = ChangeGameTime.Result.FailureNonHost;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // ゲームを開始しているかどうかチェック
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
+                if (roomData.IsPlaying) {
+                    Debug.LogWarningFormat("[RequestedChangeGameTime] 既にゲームを開始しています\nid : {0}", id);
+                    msg.Result = ChangeGameTime.Result.FailurePlaying;
+                    connection.Send(msg);
+                    return;
+                }
+
+                var isSuccess = roomData.ChangeGameTime(request.ChangeForward);
+                if (!isSuccess) {
+                    msg.Result = ChangeGameTime.Result.NoChange;
+                    connection.Send(msg);
+                    return;
+                }
+
+                msg.Result = ChangeGameTime.Result.Succeed;
+                connection.Send(msg);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[RequestedChangeGameTime] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+                msg.Result = ChangeGameTime.Result.FailureUnknown;
+                msg.Exception = e;
+                connection.Send(msg);
+                return;
+            }
+
+            SendRoomChangeGameTime(roomData);
+        }
+
+        /// <summary>
+        /// サーバから制限時間の変更を通知する。
+        /// </summary>
+        private void SendRoomChangeGameTime(RoomData roomData) {
+            var msg = new ChangeGameTime.SendRoom();
+            msg.IsLowerLimit = roomData.IsLowerLimitGameTime;
+            msg.IsUpperLimit = roomData.IsUpperLimitGameTime;
+            msg.NewGameTime = roomData.VariableArg.GameTime;
+
+            foreach (var member in roomData.GetAllMemberConnection()) {
+                member.Send(msg);
+            }
+        }
+
+        public event Action<ChangeGameTime.SendRoom> OnChangeGameTimeReceiveEvent;
+
+        private void ReceiveChangeGameTime(NetworkConnection connection, ChangeGameTime.SendRoom data) {
+            OnChangeGameTimeReceiveEvent?.Invoke(data);
+        }
+
+        #endregion
+
+        #region Request Change Wolf Num
+
+        /// <summary>
+        /// 人狼の人数を変更する。
+        /// </summary>
+        public void RequestChangeWolfNum(ChangeWolfNum.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        public event Action<ChangeWolfNum.Response> OnChangeWolfNumResponseEvent;
+
+        private void ResponseChangeWolfNum(NetworkConnection connection, ChangeWolfNum.Response response) {
+            OnChangeWolfNumResponseEvent?.Invoke(response);
+        }
+
+        /// <summary>
+        /// 人狼の人数を変更する。
+        /// </summary>
+        private void RequestedChangeWolfNum(NetworkConnection connection, ChangeWolfNum.Request request) {
+            var msg = new ChangeWolfNum.Response();
+            var id = connection.connectionId;
+            RoomData roomData;
+
+            try {
+                // プレイヤーが存在しているかどうかチェック
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedChangeWolfNum] 存在しないプレイヤーが指定されました\nid : {0}", id);
+                    msg.Result = ChangeWolfNum.Result.FailureNonExistPlayer;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // 部屋が存在しているかどうかチェック
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedChangeWolfNum] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
+                    msg.Result = ChangeWolfNum.Result.FailureNonHost;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // ゲームを開始しているかどうかチェック
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
+                if (roomData.IsPlaying) {
+                    Debug.LogWarningFormat("[RequestedChangeWolfNum] 既にゲームを開始しています\nid : {0}", id);
+                    msg.Result = ChangeWolfNum.Result.FailurePlaying;
+                    connection.Send(msg);
+                    return;
+                }
+
+                var isSuccess = roomData.ChangeWolfNum(request.ChangeForward);
+                if (!isSuccess) {
+                    msg.Result = ChangeWolfNum.Result.NoChange;
+                    connection.Send(msg);
+                    return;
+                }
+
+                msg.Result = ChangeWolfNum.Result.Succeed;
+                connection.Send(msg);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[RequestedChangeWolfNum] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+                msg.Result = ChangeWolfNum.Result.FailureUnknown;
+                msg.Exception = e;
+                connection.Send(msg);
+                return;
+            }
+
+            SendRoomChangeWolfNum(roomData);
+        }
+
+        /// <summary>
+        /// サーバから人狼の人数の変更を通知する。
+        /// </summary>
+        private void SendRoomChangeWolfNum(RoomData roomData) {
+            var msg = new ChangeWolfNum.SendRoom();
+            msg.IsLowerLimit = roomData.IsLowerLimitWolfNum;
+            msg.IsUpperLimit = roomData.IsUpperLimitWolfNum;
+            msg.NewWolfNum = roomData.VariableArg.WolfNum;
+
+            foreach (var member in roomData.GetAllMemberConnection()) {
+                member.Send(msg);
+            }
+        }
+
+        public event Action<ChangeWolfNum.SendRoom> OnChangeWolfNumReceiveEvent;
+
+        private void ReceiveChangeWolfNum(NetworkConnection connection, ChangeWolfNum.SendRoom data) {
+            OnChangeWolfNumReceiveEvent?.Invoke(data);
         }
 
         #endregion

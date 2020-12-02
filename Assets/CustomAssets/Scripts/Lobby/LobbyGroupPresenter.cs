@@ -8,6 +8,7 @@ using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Dialog;
+using Game;
 using Lobby.CreateRoom;
 using Lobby.EditPlayerName;
 using Lobby.JoinRoom;
@@ -73,6 +74,7 @@ namespace Lobby {
         }
 
         public async UniTask StateOutAsync() {
+            StateMachine.RequestChangeState(LobbyState.None);
             UnbindEvents();
             await view.HideAsync();
         }
@@ -107,7 +109,7 @@ namespace Lobby {
             var response = await joinRoomApi.Request(new ConnectData.JoinRoom.Request() {RoomGuid = roomGuid});
 
             if (response.Result == ConnectData.JoinRoom.Result.Succeed) {
-                parentStateMachine.RequestChangeState(GroupState.Game);
+                parentStateMachine.RequestChangeState(GroupState.Game, new GameGroupArg {RoomGuid = roomGuid});
                 return;
             }
 
@@ -137,7 +139,7 @@ namespace Lobby {
             var createRoomApi = new CreateRoomApi();
             var response = await createRoomApi.Request(new ConnectData.CreateRoom.Request {RoomName = roomName});
             if (response.Result == ConnectData.CreateRoom.Result.Succeed) {
-                parentStateMachine.RequestChangeState(GroupState.Game, null);
+                parentStateMachine.RequestChangeState(GroupState.Game, new GameGroupArg {RoomGuid = response.RoomGuid});
             }
         }
     }

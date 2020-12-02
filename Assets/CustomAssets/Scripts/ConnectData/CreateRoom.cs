@@ -11,6 +11,7 @@ namespace ConnectData {
         public struct Response : NetworkMessage {
             public Result Result;
             public Exception Exception;
+            public Guid RoomGuid;
         }
         
         public enum Result {

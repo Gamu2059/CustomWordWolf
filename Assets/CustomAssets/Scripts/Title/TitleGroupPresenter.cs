@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Api;
 using Api.SequenceCommand;
 using Common;
+using ConnectData;
 using Cysharp.Threading.Tasks;
 using Manager;
 using Mirror;
@@ -53,7 +55,14 @@ namespace Title {
             var (isSuccess, errorCode) = await connectClient.ConnectClientAsync();
 
             if (isSuccess) {
-                parentStateMachine.RequestChangeState(GroupState.Lobby, null);
+                var applyPlayerNameApi = new ApplyPlayerNameApi();
+                var msg = new ApplyPlayerName.Request {PlayerName = PlayerPrefsManager.PlayerName};
+                var result = await applyPlayerNameApi.Request(msg);
+                if (result.Result == ApplyPlayerName.Result.Succeed) {
+                    parentStateMachine.RequestChangeState(GroupState.Lobby, null);
+                } else {
+                    Debug.LogError("サーバとの接続に失敗しました");
+                }
             } else {
                 Debug.LogError("サーバとの接続に失敗しました " + errorCode);
             }

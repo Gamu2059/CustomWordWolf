@@ -12,6 +12,8 @@ namespace ConnectData {
             public Exception Exception;
             public bool IsHost;
             public RoomDetailData RoomData;
+            public int GameTime;
+            public int WolfNum;
         }
         
         public enum Result {

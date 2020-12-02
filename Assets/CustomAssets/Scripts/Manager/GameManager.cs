@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Common;
+using Game;
 using Guide;
 using Lobby;
 using Title;
@@ -15,6 +16,9 @@ namespace Manager {
 
         [SerializeField]
         private LobbyGroupPresenter lobbyPresenter;
+
+        [SerializeField]
+        private GameGroupPresenter gamePresenter;
 
         [SerializeField]
         private GuideGroupPresenter guidePresenter;
@@ -33,16 +37,19 @@ namespace Manager {
         private void InitializeChild() {
             titlePresenter.Initialize();
             lobbyPresenter.Initialize();
+            gamePresenter.Initialize();
         }
 
         private void BindState() {
             StateDictionary.Add(GroupState.Title, titlePresenter);
             StateDictionary.Add(GroupState.Lobby, lobbyPresenter);
+            StateDictionary.Add(GroupState.Game, gamePresenter);
         }
 
         private void InjectStateMachine() {
             titlePresenter.InjectStateMachine(StateMachine);
             lobbyPresenter.InjectStateMachine(StateMachine);
+            gamePresenter.InjectStateMachine(StateMachine);
         }
     }
 }

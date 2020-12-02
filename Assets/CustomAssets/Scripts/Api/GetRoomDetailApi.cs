@@ -2,7 +2,7 @@
 using Manager;
 
 namespace Api {
-    public class LoadGameSceneApi : ApiBase<GetRoomDetailData.Request, GetRoomDetailData.Response> {
+    public class GetRoomDetailApi : ApiBase<GetRoomDetailData.Request, GetRoomDetailData.Response> {
         protected override void OnRequest(CustomNetworkManager networkManager, GetRoomDetailData.Request request) {
             networkManager.RequestGetRoomDetailData(request);
         }

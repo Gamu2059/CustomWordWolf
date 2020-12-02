@@ -4,6 +4,7 @@ using System.Linq;
 using ConnectData;
 using Mirror;
 using UniRx;
+using UnityEngine;
 
 namespace ManagedData {
     public enum RoomState {
@@ -11,14 +12,18 @@ namespace ManagedData {
         PlayGame,
     }
 
-    public struct ConstArg {
+    public class ConstArg {
         public Guid RoomGuid;
         public string RoomName;
         public int MaxMemberNum;
+        public int GameTimeResolution;
+        public int WolfNumResolution;
+        public Vector2Int GameTimeRange;
+        public Vector2Int WolfNumRange;
         public List<(string, string)> ThemeUnitList;
     }
 
-    public struct VariableArg {
+    public class VariableArg {
         public int GameTime;
         public int WolfNum;
     }
@@ -37,20 +42,26 @@ namespace ManagedData {
         private IDisposable gameTimeDisposable;
 
         public DateTime DateTime { get; }
-        public Guid RoomGuid { get; }
-        public string RoomName { get; }
-        public int MaxMemberNum { get; }
         public int HostConnectionId { get; private set; }
         public RoomState State { get; private set; }
 
-        public VariableArg VariableArg { get; private set; }
+        public ConstArg ConstArg { get; }
+
+        public VariableArg VariableArg { get; }
+
+        public Guid RoomGuid => ConstArg.RoomGuid;
 
         public DateTime GameStartDateTime { get; private set; }
 
         public bool IsPlaying => State == RoomState.PlayGame;
         public int MemberNum => memberDictionary.Count;
 
-        public bool IsFullMember => MemberNum >= MaxMemberNum;
+        public bool IsFullMember => MemberNum >= ConstArg.MaxMemberNum;
+
+        public bool IsLowerLimitGameTime => VariableArg.GameTime <= ConstArg.GameTimeRange.x;
+        public bool IsUpperLimitGameTime => VariableArg.GameTime >= ConstArg.GameTimeRange.y;
+        public bool IsLowerLimitWolfNum => VariableArg.WolfNum <= ConstArg.WolfNumRange.x;
+        public bool IsUpperLimitWolfNum => VariableArg.WolfNum >= ConstArg.WolfNumRange.y;
 
         public event Action<RoomData> OnTimeOverEvent;
 
@@ -59,10 +70,9 @@ namespace ManagedData {
             this.playerDataHolder = playerDataHolder;
 
             this.DateTime = DateTime.UtcNow;
-            this.RoomGuid = constArg.RoomGuid;
-            this.RoomName = constArg.RoomName;
-            this.MaxMemberNum = constArg.MaxMemberNum;
+            this.HostConnectionId = connection.connectionId;
             this.State = RoomState.ReadyGame;
+            this.ConstArg = constArg;
             this.VariableArg = variableArg;
 
             themeBuilder = new ThemeBuilder(constArg.ThemeUnitList);
@@ -104,6 +114,45 @@ namespace ManagedData {
 
             var firstMember = memberDictionary.OrderBy(m => m.Value).First();
             HostConnectionId = firstMember.Key;
+            return true;
+        }
+
+        public bool ChangeGameTime(int changeForward) {
+            if (changeForward == 0) {
+                return false;
+            }
+
+            var value = VariableArg.GameTime;
+            var resolution = ConstArg.GameTimeResolution;
+            var range = ConstArg.GameTimeRange;
+
+            value += changeForward > 0 ? resolution : -resolution;
+            value = Mathf.Max(Mathf.Min(value, range.y), range.x);
+            if (value == VariableArg.GameTime) {
+                return false;
+            }
+
+            VariableArg.GameTime = value;
+            return true;
+        }
+
+        public bool ChangeWolfNum(int changeForward) {
+            if (changeForward == 0) {
+                return false;
+                ;
+            }
+
+            var value = VariableArg.WolfNum;
+            var resolution = ConstArg.WolfNumResolution;
+            var range = ConstArg.WolfNumRange;
+
+            value += changeForward > 0 ? resolution : -resolution;
+            value = Mathf.Max(Mathf.Min(value, range.y), range.x);
+            if (value == VariableArg.WolfNum) {
+                return false;
+            }
+
+            VariableArg.WolfNum = value;
             return true;
         }
 
@@ -163,11 +212,12 @@ namespace ManagedData {
 
         public RoomSimpleData CreateRoomSimpleData() {
             var playerData = playerDataHolder.GetPlayerData(HostConnectionId);
+            Debug.Log(playerData.PlayerName);
             return new RoomSimpleData {
                 RoomGuid = RoomGuid,
-                RoomName = RoomName,
-                HostName = playerData?.PlayerName,
-                MaxMemberNum = MaxMemberNum,
+                RoomName = ConstArg.RoomName,
+                HostName = playerData.PlayerName,
+                MaxMemberNum = ConstArg.MaxMemberNum,
                 MemberNum = MemberNum,
             };
         }
@@ -177,13 +227,13 @@ namespace ManagedData {
                 .OrderBy(p => p.Value)
                 .Select(p => new PlayerSimpleData {
                     PlayerConnectionId = p.Key,
-                    PlayerName = playerDataHolder.GetPlayerData(p.Key)?.PlayerName
+                    PlayerName = playerDataHolder.GetPlayerData(p.Key).PlayerName
                 }).ToList();
 
             return new RoomDetailData {
                 RoomGuid = RoomGuid,
-                RoomName = RoomName,
-                MaxMemberNum = MaxMemberNum,
+                RoomName = ConstArg.RoomName,
+                MaxMemberNum = ConstArg.MaxMemberNum,
                 PlayerDataList = playerDataList,
             };
         }

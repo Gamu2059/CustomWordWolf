@@ -6,11 +6,6 @@ using UniRx;
 using UnityEngine;
 
 namespace Game {
-    public enum GameState {
-        ReadyGame,
-        PlayGame,
-        TimeOverGame,
-    }
 
     public class GameModel {
         public GameState State { get; private set; }
@@ -28,11 +23,11 @@ namespace Game {
         }
 
         public void ReadyGame() {
-            State = GameState.ReadyGame;
+            // State = GameState.ReadyGame;
         }
 
         public void StartGame(StartGame.SendRoom data) {
-            State = GameState.PlayGame;
+            // State = GameState.PlayGame;
             
             remainTime.Value = data.GameTime;
             timer = Observable
@@ -41,7 +36,7 @@ namespace Game {
         }
 
         public void TimeOverGame(TimeOver.SendRoom data) {
-            State = GameState.TimeOverGame;
+            // State = GameState.TimeOverGame;
             timer?.Dispose();
         }
 

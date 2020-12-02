@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using Common;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Lobby.JoinRoom.RoomList {
-    public class JoinRoomListView : MonoBehaviour {
+    public class JoinRoomListView : MonoBehaviour, Initializable {
         [SerializeField]
         private GameObject noRoomTextObj;
 
