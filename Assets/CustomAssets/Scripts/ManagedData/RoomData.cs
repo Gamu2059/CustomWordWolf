@@ -253,5 +253,13 @@ namespace ManagedData {
                 NewWolfNum = VariableArg.WolfNum,
             };
         }
+
+        public TimeOver.SendRoom CreateTimeOverSendData() {
+            return new TimeOver.SendRoom {
+                PeopleTheme = peopleTheme,
+                WolfTheme = wolfTheme,
+                WolfMemberList = wolfMemberList,
+            };
+        }
     }
 }

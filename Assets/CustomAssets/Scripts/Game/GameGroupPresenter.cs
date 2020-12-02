@@ -6,6 +6,7 @@ using CustomAssets.Scripts.Game;
 using Cysharp.Threading.Tasks;
 using Dialog;
 using Game.Ready;
+using Game.Result;
 using Manager;
 using UnityEngine;
 
@@ -27,6 +28,9 @@ namespace Game {
         [SerializeField]
         private PlayPresenter playPresenter;
 
+        [SerializeField]
+        private ResultPresenter resultPresenter;
+
         private StateMachine<GroupState> parentStateMachine;
 
         protected override void OnInitialize() {
@@ -41,16 +45,19 @@ namespace Game {
         private void InitializeChild() {
             readyPresenter.Initialize();
             playPresenter.Initialize();
+            resultPresenter.Initialize();
         }
 
         private void BindState() {
             StateDictionary.Add(GameState.Ready, readyPresenter);
             StateDictionary.Add(GameState.Play, playPresenter);
+            StateDictionary.Add(GameState.Result, resultPresenter);
         }
 
         private void InjectStateMachine() {
             readyPresenter.InjectStateMachine(StateMachine);
             playPresenter.InjectStateMachine(StateMachine);
+            resultPresenter.InjectStateMachine(StateMachine);
         }
 
         public void InjectStateMachine(StateMachine<GroupState> stateMachine) {

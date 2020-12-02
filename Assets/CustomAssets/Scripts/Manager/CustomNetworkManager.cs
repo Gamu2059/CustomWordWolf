@@ -888,8 +888,9 @@ namespace Manager {
         /// </summary>
         private void SendRoomTimeOver(RoomData roomData) {
             roomData.OnTimeOverEvent -= SendRoomTimeOver;
+            var msg = roomData.CreateTimeOverSendData();
             foreach (var member in roomData.GetAllMemberConnection()) {
-                member.Send(new TimeOver.SendRoom());
+                member.Send(msg);
             }
         }
 
