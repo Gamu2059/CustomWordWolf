@@ -27,9 +27,9 @@ namespace ManagedData {
         private PlayerDataHolder playerDataHolder;
 
         private ThemeBuilder themeBuilder;
-        private Dictionary<NetworkConnection, DateTime> memberDictionary;
-        private List<uint> wolfMemberList;
-        private Dictionary<uint, uint> voteDictionary;
+        private Dictionary<int, DateTime> memberDictionary;
+        private List<int> wolfMemberList;
+        private Dictionary<int, int> voteDictionary;
 
         private string peopleTheme;
         private string wolfTheme;
@@ -40,7 +40,7 @@ namespace ManagedData {
         public Guid RoomGuid { get; }
         public string RoomName { get; }
         public int MaxMemberNum { get; }
-        public uint HostNetId { get; private set; }
+        public int HostConnectionId { get; private set; }
         public RoomState State { get; private set; }
 
         public VariableArg VariableArg { get; private set; }
@@ -66,38 +66,44 @@ namespace ManagedData {
             this.VariableArg = variableArg;
 
             themeBuilder = new ThemeBuilder(constArg.ThemeUnitList);
-            memberDictionary = new Dictionary<NetworkConnection, DateTime>();
-            wolfMemberList = new List<uint>();
-            voteDictionary = new Dictionary<uint, uint>();
+            memberDictionary = new Dictionary<int, DateTime>();
+            wolfMemberList = new List<int>();
+            voteDictionary = new Dictionary<int, int>();
 
             JoinRoom(connection);
         }
 
+        public bool ContainMember(int connectionId) {
+            return memberDictionary.ContainsKey(connectionId);
+        }
+
         public bool JoinRoom(NetworkConnection joinedPlayerConnection) {
-            if (memberDictionary.ContainsKey(joinedPlayerConnection)) {
+            var connectionId = joinedPlayerConnection.connectionId;
+            if (ContainMember(connectionId)) {
                 return false;
             }
 
-            memberDictionary.Add(joinedPlayerConnection, DateTime.Now);
+            memberDictionary.Add(connectionId, DateTime.Now);
             return true;
         }
 
         public bool LeaveRoom(NetworkConnection leftPlayerConnection) {
-            if (!memberDictionary.ContainsKey(leftPlayerConnection)) {
+            var connectionId = leftPlayerConnection.connectionId;
+            if (!ContainMember(connectionId)) {
                 return false;
             }
 
-            memberDictionary.Remove(leftPlayerConnection);
+            memberDictionary.Remove(connectionId);
             return true;
         }
 
         public bool ChangeHost() {
-            var fastJoinMember = memberDictionary.OrderBy(m => m.Value).First();
-            if (fastJoinMember.Key == null) {
+            if (MemberNum < 1) {
                 return false;
             }
 
-            HostNetId = fastJoinMember.Key.identity.netId;
+            var firstMember = memberDictionary.OrderBy(m => m.Value).First();
+            HostConnectionId = firstMember.Key;
             return true;
         }
 
@@ -107,11 +113,10 @@ namespace ManagedData {
             voteDictionary.Clear();
 
             (peopleTheme, wolfTheme) = themeBuilder.BuildTheme();
-            wolfMemberList = new List<uint>(
+            wolfMemberList = new List<int>(
                 memberDictionary.Keys
                     .OrderBy(_ => Guid.NewGuid())
                     .Take(VariableArg.WolfNum)
-                    .Select(k => k.identity.netId)
             );
             GameStartDateTime = DateTime.UtcNow;
             gameTimeDisposable = Observable
@@ -131,42 +136,33 @@ namespace ManagedData {
             wolfMemberList.Clear();
         }
 
-        public string GetTheme(uint netId) {
-            return wolfMemberList.Contains(netId) ? wolfTheme : peopleTheme;
+        public string GetTheme(int connectionId) {
+            return wolfMemberList.Contains(connectionId) ? wolfTheme : peopleTheme;
         }
 
-        public void VotePlayer(uint voteOriginPlayerNetId, uint voteForwardPlayerNetId) {
-            if (voteDictionary.ContainsKey(voteOriginPlayerNetId)) {
-                voteDictionary[voteOriginPlayerNetId] = voteForwardPlayerNetId;
+        public void VotePlayer(int voteOriginPlayerConnectionId, int voteForwardPlayerConnectionId) {
+            if (voteDictionary.ContainsKey(voteOriginPlayerConnectionId)) {
+                voteDictionary[voteOriginPlayerConnectionId] = voteForwardPlayerConnectionId;
             } else {
-                voteDictionary.Add(voteOriginPlayerNetId, voteForwardPlayerNetId);
+                voteDictionary.Add(voteOriginPlayerConnectionId, voteForwardPlayerConnectionId);
             }
         }
 
-        public IEnumerable<NetworkConnection> GetAllMember() {
-            return memberDictionary.Keys;
+        public IEnumerable<NetworkConnection> GetAllMemberConnection() {
+            return memberDictionary.Keys
+                .Select(id => playerDataHolder.GetPlayerData(id))
+                .Select(data => data.Connection);
         }
 
-        public List<NetworkConnection> GetAllMemberList() {
-            return GetAllMember().ToList();
-        }
-
-        public IEnumerable<NetworkConnection> GetAllMemberOrderByAccess() {
+        public IEnumerable<NetworkConnection> GetAllMemberConnectionOrderByAccess() {
             return memberDictionary
                 .OrderBy(m => m.Value)
-                .Select(m => m.Key);
-        }
-
-        public List<NetworkConnection> GetAllMemberListOrderByAccess() {
-            return GetAllMemberOrderByAccess().ToList();
-        }
-
-        public bool ContainMember(uint playerNetId) {
-            return memberDictionary.Keys.Any(m => m.identity.netId == playerNetId);
+                .Select(m => playerDataHolder.GetPlayerData(m.Key))
+                .Select(data => data.Connection);
         }
 
         public RoomSimpleData CreateRoomSimpleData() {
-            var playerData = playerDataHolder.GetPlayerData(HostNetId);
+            var playerData = playerDataHolder.GetPlayerData(HostConnectionId);
             return new RoomSimpleData {
                 RoomGuid = RoomGuid,
                 RoomName = RoomName,
@@ -180,8 +176,8 @@ namespace ManagedData {
             var playerDataList = memberDictionary
                 .OrderBy(p => p.Value)
                 .Select(p => new PlayerSimpleData {
-                    PlayerNetId = p.Key.identity.netId,
-                    PlayerName = playerDataHolder.GetPlayerData(p.Key.identity.netId)?.PlayerName
+                    PlayerConnectionId = p.Key,
+                    PlayerName = playerDataHolder.GetPlayerData(p.Key)?.PlayerName
                 }).ToList();
 
             return new RoomDetailData {

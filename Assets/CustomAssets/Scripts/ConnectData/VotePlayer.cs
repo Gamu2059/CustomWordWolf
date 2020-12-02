@@ -8,7 +8,7 @@ namespace ConnectData {
             /// <summary>
             /// 投票先のプレイヤーのID
             /// </summary>
-            public uint VoteForwardPlayerNetId;
+            public int VoteForwardPlayerConnectionId;
         }
         
         public struct Response : NetworkMessage {
@@ -28,7 +28,7 @@ namespace ConnectData {
             /// <summary>
             /// 投票元のプレイヤーのID
             /// </summary>
-            public uint VoteOriginPlayerNetId;
+            public int VoteOriginPlayerConnectionId;
         }
     }
 }

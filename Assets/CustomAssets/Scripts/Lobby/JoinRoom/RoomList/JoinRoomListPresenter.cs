@@ -49,7 +49,7 @@ namespace Lobby.JoinRoom.RoomList {
             view.SetActiveNoRoom(false);
             foreach (var roomData in roomListResponse.RoomDataList) {
                 var element = Instantiate(elementPrefab);
-                element.transform.SetParent(transform);
+                element.transform.SetParent(layoutGroup.transform);
                 element.Initialize(roomData);
                 element.OnJoinRoomDecidedEvent += guid => OnJoinRoomDecidedEvent?.Invoke(guid);
                 elements.Add(element);

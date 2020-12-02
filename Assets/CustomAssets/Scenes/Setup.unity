@@ -1133,3 +1133,6 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
+  defaultMaxRoomMemberNum: 10
+  defaultGameTime: 300
+  defaultWolfNum: 1

@@ -1,6 +1,6 @@
 ﻿namespace ConnectData {
     public struct PlayerSimpleData {
-        public uint PlayerNetId;
+        public int PlayerConnectionId;
         public string PlayerName;
     }
 }

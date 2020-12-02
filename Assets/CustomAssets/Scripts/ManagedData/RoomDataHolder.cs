@@ -48,14 +48,14 @@ namespace ManagedData {
             return null;
         }
 
-        public RoomData GetRoomDataByContainPlayer(uint playerNetId) {
+        public RoomData GetRoomDataByContainPlayer(int playerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.FirstOrDefault(d => d.ContainMember(playerNetId));
+            return roomDictionary.Values.FirstOrDefault(d => d.ContainMember(playerConnectionId));
         }
 
-        public RoomData GetRoomDataByHostPlayer(uint hostPlayerNetId) {
+        public RoomData GetRoomDataByHostPlayer(int hostPlayerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.FirstOrDefault(d => d.HostNetId == hostPlayerNetId);
+            return roomDictionary.Values.FirstOrDefault(d => d.HostConnectionId == hostPlayerConnectionId);
         }
 
         public bool ExistRoomByGuid(Guid guid) {
@@ -63,14 +63,14 @@ namespace ManagedData {
             return roomDictionary.ContainsKey(guid);
         }
 
-        public bool ExistRoomByContainPlayer(uint playerNetId) {
+        public bool ExistRoomByContainPlayer(int playerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.Any(d => d.ContainMember(playerNetId));
+            return roomDictionary.Values.Any(d => d.ContainMember(playerConnectionId));
         }
 
-        public bool ExistRoomByHostPlayer(uint hostPlayerNetId) {
+        public bool ExistRoomByHostPlayer(int hostPlayerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.Any(d => d.HostNetId == hostPlayerNetId);
+            return roomDictionary.Values.Any(d => d.HostConnectionId == hostPlayerConnectionId);
         }
     }
 }

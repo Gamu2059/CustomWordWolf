@@ -89,7 +89,7 @@ namespace Game {
 
         private async void OnPlayerVoteAsync() {
             var votePlayerApi = new VotePlayerApi();
-            var response = await votePlayerApi.Request(new VotePlayer.Request {VoteForwardPlayerNetId = 1});
+            var response = await votePlayerApi.Request(new VotePlayer.Request {VoteForwardPlayerConnectionId = 1});
             Debug.Log("投票 " + response.Result);
         }
 

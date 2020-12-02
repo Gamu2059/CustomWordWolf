@@ -27,6 +27,9 @@ namespace Lobby.JoinRoom.RoomList {
             roomNameText.text = roomData.RoomName;
             hostNameText.text = roomData.HostName;
             roomMemberNumText.text = $"{roomData.MemberNum}/{roomData.MaxMemberNum}人";
+
+            // なぜか分からないけどスケールがおかしくなることがあるので1にする
+            transform.localScale = Vector3.one;
         }
     }
 }

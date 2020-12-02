@@ -50,36 +50,13 @@ namespace Manager {
         public override void OnServerDisconnect(NetworkConnection conn) {
             base.OnServerDisconnect(conn);
             Debug.Log("OnServerDisconnect");
-        }
-
-        public override void OnServerReady(NetworkConnection conn) {
-            base.OnServerReady(conn);
-            Debug.Log("OnServerReady");
+            FinalizePlayerDataOnServer(conn);
         }
 
         public override void OnServerAddPlayer(NetworkConnection conn) {
             base.OnServerAddPlayer(conn);
             Debug.Log("OnServerAddPlayer");
-            InitialPlayerData(conn);
-        }
-
-        private void InitialPlayerData(NetworkConnection connection) {
-            playerDataHolder.CreatePlayerData(connection.identity, "");
-        }
-
-        public override void OnServerError(NetworkConnection conn, int errorCode) {
-            base.OnServerError(conn, errorCode);
-            Debug.Log("OnServerError");
-        }
-
-        public override void OnServerChangeScene(string newSceneName) {
-            base.OnServerChangeScene(newSceneName);
-            Debug.Log("OnServerChangeScene");
-        }
-
-        public override void OnServerSceneChanged(string sceneName) {
-            base.OnServerSceneChanged(sceneName);
-            Debug.Log("OnServerSceneChanged");
+            InitializePlayerDataOnServer(conn);
         }
 
         #endregion
@@ -172,6 +149,38 @@ namespace Manager {
             NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
         }
 
+        private void InitializePlayerDataOnServer(NetworkConnection connection) {
+            try {
+                playerDataHolder.CreatePlayerData(connection, "");
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[InitializePlayerDataOnServer] 予期せぬエラーが発生しました\nid : {0}",
+                    connection.connectionId);
+                Debug.LogException(e);
+            }
+        }
+
+        private void FinalizePlayerDataOnServer(NetworkConnection connection) {
+            var id = connection.connectionId;
+            try {
+                // プレイヤーが存在しているかどうかチェックする
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[FinalizePlayerDataOnServer] 存在しないプレイヤーが切断しようとしました\nid : {0}",
+                        id);
+                    return;
+                }
+
+                // 部屋に入っている場合は退室処理を行う
+                if (roomDataHolder.ExistRoomByContainPlayer(id)) {
+                    RequestedLeaveRoom(connection, new LeaveRoom.Request());
+                }
+
+                playerDataHolder.RemovePlayerData(connection);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[FinalizePlayerDataOnServer] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+            }
+        }
+
         #region Request Apply Player Name
 
         /// <summary>
@@ -192,28 +201,25 @@ namespace Manager {
         /// </summary>
         private void RequestedApplyPlayerName(NetworkConnection connection, ApplyPlayerName.Request request) {
             var msg = new ApplyPlayerName.Response();
+            var id = connection.connectionId;
 
             try {
-                var identity = connection.identity;
-                var netId = identity.netId;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedApplyPlayerName] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedApplyPlayerName] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = ApplyPlayerName.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                var playerData = playerDataHolder.GetPlayerData(connection.identity);
+                var playerData = playerDataHolder.GetPlayerData(id);
                 playerData.ApplyPlayerName(request.PlayerName);
 
                 msg.Result = ApplyPlayerName.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedApplyPlayerName] 予期せぬエラーが発生しました\nNetId : {0}",
-                    connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedApplyPlayerName] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = ApplyPlayerName.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -242,14 +248,12 @@ namespace Manager {
         /// </summary>
         private void RequestedGetRoomList(NetworkConnection connection, GetRoomList.Request request) {
             var msg = new GetRoomList.Response();
+            var id = connection.connectionId;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedGetRoomList] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedGetRoomList] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = GetRoomList.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
@@ -267,7 +271,8 @@ namespace Manager {
                 msg.RoomDataList = roomDataList;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedGetRoomList] 予期せぬエラーが発生しました\nNetId : {0}", connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedGetRoomList] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = GetRoomList.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -296,25 +301,20 @@ namespace Manager {
         /// </summary>
         private void RequestedCreateRoom(NetworkConnection connection, CreateRoom.Request request) {
             var msg = new CreateRoom.Response();
+            var id = connection.connectionId;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedCreateRoom] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedCreateRoom] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = CreateRoom.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                var netId = identity.netId;
-
                 // 既に部屋のホストになっているかどうかチェック
-                if (roomDataHolder.ExistRoomByHostPlayer(netId)) {
-                    Debug.LogWarningFormat("[RequestedCreateRoom] 指定されたプレイヤーは既に部屋のホストになっています\nNetId : {0}",
-                        connection.identity.netId);
+                if (roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedCreateRoom] 指定されたプレイヤーは既に部屋のホストになっています\nid : {0}", id);
                     msg.Result = CreateRoom.Result.FailureMultipleRoomHost;
                     connection.Send(msg);
                     return;
@@ -323,6 +323,7 @@ namespace Manager {
                 var constArg = new ConstArg();
                 constArg.RoomName = request.RoomName;
                 constArg.MaxMemberNum = defaultMaxRoomMemberNum;
+                constArg.ThemeUnitList = themeList;
 
                 var variableArg = new VariableArg();
                 variableArg.GameTime = defaultGameTime;
@@ -332,7 +333,8 @@ namespace Manager {
                 msg.Result = CreateRoom.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedCreateRoom] 予期せぬエラーが発生しました\nNetId : {0}", connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedCreateRoom] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = CreateRoom.Result.FailureMultipleRoomHost;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -348,10 +350,10 @@ namespace Manager {
         /// </summary>
         private void SendRoomUpdateMember(RoomData roomData) {
             var roomDetailData = roomData.CreateRoomDetailData();
-            foreach (var member in roomData.GetAllMember()) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
                 var msg = new RoomUpdate.SendRoom();
                 msg.RoomData = roomDetailData;
-                msg.IsHost = member.identity.netId == roomData.HostNetId;
+                msg.IsHost = member.connectionId == roomData.HostConnectionId;
                 member.Send(msg);
             }
         }
@@ -384,26 +386,21 @@ namespace Manager {
         /// </summary>
         private void RequestedJoinRoom(NetworkConnection connection, JoinRoom.Request request) {
             var msg = new JoinRoom.Response();
+            var id = connection.connectionId;
             RoomData roomData;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedJoinRoom] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                var netId = identity.netId;
-
                 // プレイヤーが既に部屋に入っているかどうかチェック
-                if (roomDataHolder.ExistRoomByContainPlayer(netId)) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] プレイヤーは既にいずれかの部屋に入っています\nNetId : {0}",
-                        connection.identity.netId);
+                if (roomDataHolder.ExistRoomByContainPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedJoinRoom] プレイヤーは既にいずれかの部屋に入っています\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailureAlreadyJoinRoom;
                     connection.Send(msg);
                     return;
@@ -411,8 +408,7 @@ namespace Manager {
 
                 // 部屋が存在しているかどうかチェック
                 if (!roomDataHolder.ExistRoomByGuid(request.RoomGuid)) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] 存在しない部屋が指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedJoinRoom] 存在しない部屋が指定されました\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailureNonExistRoom;
                     connection.Send(msg);
                     return;
@@ -422,8 +418,7 @@ namespace Manager {
 
                 // 部屋が満員かどうかチェック
                 if (roomData.IsFullMember) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] 部屋は既に定員です\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedJoinRoom] 部屋は既に定員です\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailureFullMember;
                     connection.Send(msg);
                     return;
@@ -431,8 +426,7 @@ namespace Manager {
 
                 // ゲームを開始しているかどうかチェック
                 if (roomData.IsPlaying) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] 既にゲームを開始しています\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedJoinRoom] 既にゲームを開始しています\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailurePlaying;
                     connection.Send(msg);
                     return;
@@ -440,8 +434,7 @@ namespace Manager {
 
                 var result = roomData.JoinRoom(connection);
                 if (!result) {
-                    Debug.LogWarningFormat("[RequestedJoinRoom] 入室に失敗しました\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedJoinRoom] 入室に失敗しました\nid : {0}", id);
                     msg.Result = JoinRoom.Result.FailureJoinRoom;
                     connection.Send(msg);
                     return;
@@ -450,7 +443,8 @@ namespace Manager {
                 msg.Result = JoinRoom.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedJoinRoom] 予期せぬエラーが発生しました\nNetId : {0}", connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedJoinRoom] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = JoinRoom.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -482,37 +476,30 @@ namespace Manager {
         /// </summary>
         private void RequestedLeaveRoom(NetworkConnection connection, LeaveRoom.Request request) {
             var msg = new LeaveRoom.Response();
-            uint netId;
+            var id = connection.connectionId;
             RoomData roomData;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedLeaveRoom] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedLeaveRoom] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = LeaveRoom.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                netId = identity.netId;
-
                 // プレイヤーが部屋にいるかどうかチェック
-                if (!roomDataHolder.ExistRoomByContainPlayer(netId)) {
-                    Debug.LogWarningFormat("[RequestedLeaveRoom] プレイヤーはいずれの部屋にも入っていません\nNetId : {0}",
-                        connection.identity.netId);
+                if (!roomDataHolder.ExistRoomByContainPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedLeaveRoom] プレイヤーはいずれの部屋にも入っていません\nid : {0}", id);
                     msg.Result = LeaveRoom.Result.FailureNoJoinRoom;
                     connection.Send(msg);
                     return;
                 }
 
-                roomData = roomDataHolder.GetRoomDataByContainPlayer(netId);
+                roomData = roomDataHolder.GetRoomDataByContainPlayer(id);
                 var result = roomData.LeaveRoom(connection);
                 if (!result) {
-                    Debug.LogWarningFormat("[RequestedLeaveRoom] 退室に失敗しました\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedLeaveRoom] 退室に失敗しました\nid : {0}", id);
                     msg.Result = LeaveRoom.Result.FailureLeaveRoom;
                     connection.Send(msg);
                     return;
@@ -521,7 +508,8 @@ namespace Manager {
                 msg.Result = LeaveRoom.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedLeaveRoom] 予期せぬエラーが発生しました\nNetId : {0}", connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedLeaveRoom] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = LeaveRoom.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -535,7 +523,7 @@ namespace Manager {
             }
 
             // ホストが退室したらホストを変える
-            if (netId == roomData.HostNetId) {
+            if (id == roomData.HostConnectionId) {
                 roomData.ChangeHost();
             }
 
@@ -564,14 +552,12 @@ namespace Manager {
         /// </summary>
         private void RequestedGetRoomDetailData(NetworkConnection connection, GetRoomDetailData.Request request) {
             var msg = new GetRoomDetailData.Response();
+            var id = connection.connectionId;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedGetRoomDetailData] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedGetRoomDetailData] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = GetRoomDetailData.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
@@ -579,23 +565,20 @@ namespace Manager {
 
                 // 部屋が存在しているかどうかチェック
                 if (!roomDataHolder.ExistRoomByGuid(request.RoomGuid)) {
-                    Debug.LogWarningFormat("[RequestedGetRoomDetailData] 存在しない部屋が指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedGetRoomDetailData] 存在しない部屋が指定されました\nid : {0}", id);
                     msg.Result = GetRoomDetailData.Result.FailureNonExistRoom;
                     connection.Send(msg);
                     return;
                 }
 
-                var netId = identity.netId;
-                var roomData = roomDataHolder.GetRoomDataByContainPlayer(netId);
-
+                var roomData = roomDataHolder.GetRoomDataByContainPlayer(id);
                 msg.Result = GetRoomDetailData.Result.Succeed;
-                msg.IsHost = netId == roomData.HostNetId;
+                msg.IsHost = id == roomData.HostConnectionId;
                 msg.RoomData = roomData.CreateRoomDetailData();
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedGetRoomDetailData] 予期せぬエラーが発生しました\nNetId : {0}",
-                    connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedGetRoomDetailData] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = GetRoomDetailData.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -624,37 +607,30 @@ namespace Manager {
         /// </summary>
         private void RequestedStartGame(NetworkConnection connection, StartGame.Request request) {
             var msg = new StartGame.Response();
-            uint netId;
+            var id = connection.connectionId;
             RoomData roomData;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedStartGame] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedStartGame] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = StartGame.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                netId = identity.netId;
-
                 // 部屋が存在しているかどうかチェック
-                if (!roomDataHolder.ExistRoomByHostPlayer(netId)) {
-                    Debug.LogWarningFormat("[RequestedStartGame] 指定したプレイヤーがホストである部屋が存在しません\nNetId : {0}",
-                        connection.identity.netId);
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedStartGame] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
                     msg.Result = StartGame.Result.FailureNonHost;
                     connection.Send(msg);
                     return;
                 }
 
                 // ゲームを開始しているかどうかチェック
-                roomData = roomDataHolder.GetRoomDataByHostPlayer(netId);
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
                 if (roomData.IsPlaying) {
-                    Debug.LogWarningFormat("[RequestedStartGame] 既にゲームを開始しています\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedStartGame] 既にゲームを開始しています\nid : {0}", id);
                     msg.Result = StartGame.Result.FailurePlaying;
                     connection.Send(msg);
                     return;
@@ -665,8 +641,8 @@ namespace Manager {
                 msg.Result = StartGame.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedStartGame] 予期せぬエラーが発生しました\nNetId : {0}",
-                    connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedStartGame] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = StartGame.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
@@ -681,9 +657,9 @@ namespace Manager {
         /// サーバからゲーム開始を通知する。
         /// </summary>
         private void SendRoomStartGame(RoomData roomData) {
-            foreach (var member in roomData.GetAllMember()) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
                 var msg = new StartGame.SendRoom();
-                msg.Theme = roomData.GetTheme(member.identity.netId);
+                msg.Theme = roomData.GetTheme(member.connectionId);
                 msg.GameTime = roomData.VariableArg.GameTime;
                 msg.GameStartDateTime = roomData.GameStartDateTime;
                 member.Send(msg);
@@ -705,7 +681,7 @@ namespace Manager {
         /// </summary>
         private void SendRoomTimeOver(RoomData roomData) {
             roomData.OnTimeOverEvent -= SendRoomTimeOver;
-            foreach (var member in roomData.GetAllMember()) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
                 member.Send(new TimeOver.SendRoom());
             }
         }
@@ -738,65 +714,59 @@ namespace Manager {
         /// </summary>
         private void RequestedVotePlayer(NetworkConnection connection, VotePlayer.Request request) {
             var msg = new VotePlayer.Response();
-            uint netId;
+            var id = connection.connectionId;
             RoomData roomData;
 
             try {
-                var identity = connection.identity;
-
                 // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(identity)) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] 存在しないプレイヤーが指定されました\nNetId : {0}",
-                        connection.identity.netId);
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedVotePlayer] 存在しないプレイヤーが指定されました\nid : {0}", id);
                     msg.Result = VotePlayer.Result.FailureNonExistPlayer;
                     connection.Send(msg);
                     return;
                 }
 
-                netId = identity.netId;
-
                 // プレイヤーが部屋にいるかどうかチェック
-                if (!roomDataHolder.ExistRoomByContainPlayer(netId)) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] プレイヤーはいずれの部屋にも入っていません\nNetId : {0}",
-                        connection.identity.netId);
+                if (!roomDataHolder.ExistRoomByContainPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedVotePlayer] プレイヤーはいずれの部屋にも入っていません\nid : {0}", id);
                     msg.Result = VotePlayer.Result.FailureNoJoinRoom;
                     connection.Send(msg);
                     return;
                 }
 
-                roomData = roomDataHolder.GetRoomDataByContainPlayer(netId);
+                roomData = roomDataHolder.GetRoomDataByContainPlayer(id);
 
                 // ゲームを開始しているかどうかチェック
                 if (!roomData.IsPlaying) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] ゲームはまだ開始していません\nNetId : {0}",
-                        connection.identity.netId);
+                    Debug.LogWarningFormat("[RequestedVotePlayer] ゲームはまだ開始していません\nid : {0}", id);
                     msg.Result = VotePlayer.Result.FailureNoPlaying;
                     connection.Send(msg);
                     return;
                 }
 
-                roomData.VotePlayer(netId, request.VoteForwardPlayerNetId);
+                roomData.VotePlayer(id, request.VoteForwardPlayerConnectionId);
 
                 msg.Result = VotePlayer.Result.Succeed;
                 connection.Send(msg);
             } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedVotePlayer] 予期せぬエラーが発生しました\nNetId : {0}", connection.identity.netId);
+                Debug.LogErrorFormat("[RequestedVotePlayer] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
                 msg.Result = VotePlayer.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
                 return;
             }
 
-            SendRoomVotePlayer(roomData, netId);
+            SendRoomVotePlayer(roomData, id);
         }
 
         /// <summary>
         /// サーバから投票を通知する。
         /// </summary>
-        private void SendRoomVotePlayer(RoomData roomData, uint voteOriginPlayerNetId) {
-            foreach (var member in roomData.GetAllMember()) {
+        private void SendRoomVotePlayer(RoomData roomData, int voteOriginPlayerConnectionId) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
                 var msg = new VotePlayer.SendRoom();
-                msg.VoteOriginPlayerNetId = voteOriginPlayerNetId;
+                msg.VoteOriginPlayerConnectionId = voteOriginPlayerConnectionId;
                 member.Send(msg);
             }
         }
