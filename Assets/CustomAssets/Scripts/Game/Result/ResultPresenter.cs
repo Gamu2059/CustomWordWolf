@@ -1,45 +1,44 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using Api;
 using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
-using Game.PlayerList;
-using Game.Ready.Option;
+using Game.Ready;
 using UniRx;
 using UnityEngine;
 
-namespace Game.Ready {
-    public class ReadyArg : IChangeStateArg {
-        public Guid RoomGuid;
+namespace Game.Result {
+    public class ResultArg : IChangeStateArg {
+        public RoomDetailData RoomData;
+        public string PeopleTheme;
+        public string WolfTheme;
+        public List<int> WolfMemberList;
     }
 
-    public class ReadyPresenter :
+    public class ResultPresenter :
         MonoBehaviour,
         Initializable,
         IStateChangeable,
         IStateMachineInjectable<GameState> {
         [SerializeField]
-        private ReadyView view;
+        private ResultView view;
 
         [SerializeField]
-        private PlayerListPresenter listPresenter;
+        private ResultListPresenter peopleListPresenter;
 
         [SerializeField]
-        private OptionPresenter optionPresenter;
+        private ResultListPresenter wolfListPresenter;
 
         private StateMachine<GameState> parentStateMachine;
-        private ReadyModel model;
+        private ResultModel model;
 
         private CompositeDisposable viewDisposable;
         private CompositeDisposable apiDisposable;
 
-        public event Action OnLeaveRoomEvent;
-
         public void Initialize() {
-            model = new ReadyModel();
-            listPresenter.Initialize();
-            optionPresenter.Initialize();
+            model = new ResultModel();
+            view.Initialize();
         }
 
         public void InjectStateMachine(StateMachine<GameState> stateMachine) {
@@ -51,29 +50,16 @@ namespace Game.Ready {
             SetViewEvents();
             SetApiEvents();
 
-            var readyArg = arg as ReadyArg;
-            if (readyArg == null) {
-                Debug.LogError("ステート遷移の引数が適切ではありません");
-                return;
-            }
-
-            var getRoomDetailApi = new GetRoomDetailApi();
-            var response = await getRoomDetailApi.Request(new GetRoomDetailData.Request {RoomGuid = readyArg.RoomGuid});
-
-            await optionPresenter.ShowAsync();
-            optionPresenter.OnChangeGameTime(response.GameTime);
-            optionPresenter.OnChangeWolfNum(response.WolfNum);
-
-            if (response.Result == GetRoomDetailData.Result.Succeed) {
-                model.SetRoomData(response.RoomData);
-                listPresenter.SetMember(response.RoomData);
-                OnUpdateHostUi(response.IsHost, response.RoomData.PlayerDataList.Count);
+            if (arg is ResultArg resultArg) {
+                model.SetRoomData(resultArg.RoomData);
+                view.SetPeopleTheme(resultArg.PeopleTheme);
+                view.SetWolfTheme(resultArg.WolfTheme);
+                
+                
             }
         }
 
         public async UniTask StateOutAsync() {
-            await optionPresenter.HideAsync();
-
             DisposeApiEvents();
             DisposeViewEvents();
             await view.HideAsync();
@@ -81,16 +67,14 @@ namespace Game.Ready {
 
         private void SetViewEvents() {
             viewDisposable = new CompositeDisposable(
-                view.LeaveRoomObservable
-                    .Subscribe(_ => OnLeaveRoomEvent?.Invoke())
-                    .AddTo(gameObject),
-                view.StartGameObservable
-                    .Subscribe(_ => StartGame())
+                view.BackObservable
+                    .Subscribe(_ => BackReady())
                     .AddTo(gameObject)
             );
         }
 
         private void SetApiEvents() {
+            // これらは、リザルトからプレイに直接遷移する可能性があるためにイベントを設定している
             apiDisposable = new CompositeDisposable(
                 new UpdateMemberReceiver(OnUpdateMember),
                 new StartGameReceiver(OnStartGame)
@@ -107,20 +91,12 @@ namespace Game.Ready {
             apiDisposable = null;
         }
 
-        private async void StartGame() {
-            var startGameApi = new StartGameApi();
-            await startGameApi.Request(new StartGame.Request());
+        private void BackReady() {
+            parentStateMachine.RequestChangeState(GameState.Ready, new ReadyArg {RoomGuid = model.RoomData.RoomGuid});
         }
 
         private void OnUpdateMember(UpdateMember.SendRoom data) {
             model.SetRoomData(data.RoomData);
-            listPresenter.UpdateMember(data.RoomData);
-            OnUpdateHostUi(data.IsHost, data.RoomData.PlayerDataList.Count);
-        }
-
-        private void OnUpdateHostUi(bool isHost, int memberNum) {
-            view.SetActiveStartGameButton(isHost && memberNum > 1);
-            optionPresenter.SetActiveOperatorButton(isHost);
         }
 
         private void OnStartGame(StartGame.SendRoom data) {

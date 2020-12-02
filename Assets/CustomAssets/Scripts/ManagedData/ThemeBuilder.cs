@@ -19,7 +19,7 @@ namespace ManagedData {
             var pin = UnityEngine.Random.Range(0, sum);
             foreach (var pair in themeTableDictionary) {
                 var v = maxNum - pair.Value;
-                if (count <= pin && pin < v) {
+                if (count <= pin && pin < count + v) {
                     themeTableDictionary[pair.Key]++;
                     return pair.Key;
                 }

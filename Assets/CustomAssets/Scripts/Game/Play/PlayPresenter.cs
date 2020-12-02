@@ -4,6 +4,7 @@ using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Game.PlayerList;
+using Game.Result;
 using UniRx;
 using UnityEngine;
 
@@ -85,8 +86,13 @@ namespace Game {
         }
 
         private void OnTimeOverReceived(TimeOver.SendRoom data) {
-            model.TimeOverGame(data);
-            parentStateMachine.RequestChangeState(GameState.Result);
+            model.TimeOverGame();
+            var arg = new ResultArg();
+            arg.RoomData = model.RoomData;
+            arg.PeopleTheme = data.PeopleTheme;
+            arg.WolfTheme = data.WolfTheme;
+            arg.WolfMemberList = data.WolfMemberList;
+            parentStateMachine.RequestChangeState(GameState.Result, arg);
         }
     }
 }
