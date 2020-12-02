@@ -10,13 +10,18 @@ namespace ConnectData {
         
         public struct Response : NetworkMessage {
             public Result Result;
-            public ConnectRoomData JoinedRoomData;
+            public Exception Exception;
         }
         
         public enum Result {
+            FailureUnknown,
             Succeed,
-            NotExist,
-            Started,
+            FailureNonExistPlayer,
+            FailureAlreadyJoinRoom,
+            FailureNonExistRoom,
+            FailureFullMember,
+            FailurePlaying,
+            FailureJoinRoom,
         }
     }
 }

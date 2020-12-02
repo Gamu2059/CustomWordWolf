@@ -19,19 +19,17 @@ namespace ManagedData {
             return roomDictionary.Values.ToList();
         }
 
-        public RoomData CreateRoomData(Guid guid, string roomName, string hostName, uint hostNetId) {
+        public RoomData CreateRoomData(PlayerDataHolder playerDataHolder, NetworkConnection connection,
+            ConstArg constArg, VariableArg variableArg) {
             CheckDictionary();
-            if (ExistRoomByGuid(guid)) {
-                return null;
+
+            var guid = Guid.NewGuid();
+            while (ExistRoomByGuid(guid)) {
+                guid = Guid.NewGuid();
             }
 
-            var roomData = new RoomData {
-                RoomGuid = guid,
-                DateTime = DateTime.Now,
-                CurrentHostNetId = hostNetId,
-                RoomName = roomName,
-                HostName = hostName,
-            };
+            constArg.RoomGuid = guid;
+            var roomData = new RoomData(playerDataHolder, connection, constArg, variableArg);
             roomDictionary.Add(guid, roomData);
             return roomData;
         }
@@ -50,14 +48,14 @@ namespace ManagedData {
             return null;
         }
 
-        public RoomData GetRoomDataByContainPlayer(uint playerNetId) {
+        public RoomData GetRoomDataByContainPlayer(int playerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.FirstOrDefault(d => d.ContainMember(playerNetId));
+            return roomDictionary.Values.FirstOrDefault(d => d.ContainMember(playerConnectionId));
         }
 
-        public RoomData GetRoomDataByHostPlayer(uint hostPlayerNetId) {
+        public RoomData GetRoomDataByHostPlayer(int hostPlayerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.FirstOrDefault(d => d.CurrentHostNetId == hostPlayerNetId);
+            return roomDictionary.Values.FirstOrDefault(d => d.HostConnectionId == hostPlayerConnectionId);
         }
 
         public bool ExistRoomByGuid(Guid guid) {
@@ -65,14 +63,14 @@ namespace ManagedData {
             return roomDictionary.ContainsKey(guid);
         }
 
-        public bool ExistRoomByContainPlayer(uint playerNetId) {
+        public bool ExistRoomByContainPlayer(int playerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.Any(d => d.ContainMember(playerNetId));
+            return roomDictionary.Values.Any(d => d.ContainMember(playerConnectionId));
         }
 
-        public bool ExistRoomByHostPlayer(uint hostPlayerNetId) {
+        public bool ExistRoomByHostPlayer(int hostPlayerConnectionId) {
             CheckDictionary();
-            return roomDictionary.Values.Any(d => d.CurrentHostNetId == hostPlayerNetId);
+            return roomDictionary.Values.Any(d => d.HostConnectionId == hostPlayerConnectionId);
         }
     }
 }

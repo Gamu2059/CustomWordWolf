@@ -8,11 +8,11 @@ namespace Api {
         }
 
         protected override void Bind(CustomNetworkManager networkManager) {
-            networkManager.OnTimeOverReceived += Invoke;
+            networkManager.OnTimeOverReceiveEvent += Invoke;
         }
 
         protected override void Unbind(CustomNetworkManager networkManager) {
-            networkManager.OnTimeOverReceived -= Invoke;
+            networkManager.OnTimeOverReceiveEvent -= Invoke;
         }
     }
 }

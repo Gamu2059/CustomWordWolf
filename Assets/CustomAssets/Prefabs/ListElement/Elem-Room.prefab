@@ -487,8 +487,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomNameText: {fileID: 953538080}
+  hostNameText: {fileID: 2930036261768935034}
   roomMemberNumText: {fileID: 1595364427}
-  joinRoomButton: {fileID: 5746572317917158942}
+  joinRoomButton: {fileID: 5746572317917158913}
 --- !u!1001 &1901508057279118775
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -634,15 +635,15 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 1901508057279118775}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5746572317917158942 stripped
+--- !u!114 &5746572317917158913 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6186941567721382825, guid: 88e828846f171af40a284d64230dfb35,
+  m_CorrespondingSourceObject: {fileID: 6186941567721382838, guid: 88e828846f171af40a284d64230dfb35,
     type: 3}
   m_PrefabInstance: {fileID: 1901508057279118775}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: c0c4861e541544841aba07d20d98ce6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

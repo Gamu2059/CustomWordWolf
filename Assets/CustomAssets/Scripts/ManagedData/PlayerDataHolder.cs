@@ -1,38 +1,51 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Mirror;
 using UnityEngine;
 
 namespace ManagedData {
     public class PlayerDataHolder {
-        private Dictionary<NetworkIdentity, PlayerData> playerDictionary;
+        private Dictionary<int, PlayerData> playerDictionary;
 
         private void CheckDictionary() {
             if (playerDictionary == null) {
-                playerDictionary = new Dictionary<NetworkIdentity, PlayerData>();
+                playerDictionary = new Dictionary<int, PlayerData>();
             }
         }
 
-        public void CreatePlayerData(NetworkIdentity identity, string playerName) {
+        public bool ExistPlayerData(int connectionId) {
             CheckDictionary();
-            if (playerDictionary.ContainsKey(identity)) {
-                Debug.LogWarning("既にこのプレイヤーは登録されています");
-            } else {
-                playerDictionary.Add(identity, new PlayerData(playerName));
-            }
+            return playerDictionary.ContainsKey(connectionId);
         }
 
-        public void RemovePlayerData(NetworkIdentity identity) {
-            CheckDictionary();
-            playerDictionary.Remove(identity);
+        public bool ExistPlayerData(NetworkConnection connection) {
+            return ExistPlayerData(connection.connectionId);
         }
 
-        public PlayerData GetPlayerData(NetworkIdentity identity) {
-            CheckDictionary();
-            if (playerDictionary.TryGetValue(identity, out var playerData)) {
-                return playerData;
+        public PlayerData GetPlayerData(int connectionId) {
+            if (ExistPlayerData(connectionId)) {
+                return playerDictionary[connectionId];
             }
 
             return null;
+        }
+
+        public PlayerData GetPlayerData(NetworkConnection connection) {
+            return GetPlayerData(connection.connectionId);
+        }
+
+        public void CreatePlayerData(NetworkConnection connection, string playerName) {
+            var connectionId = connection.connectionId;
+            if (!ExistPlayerData(connectionId)) {
+                playerDictionary.Add(connectionId, new PlayerData(connection, playerName));
+            }
+        }
+
+        public void RemovePlayerData(NetworkConnection connection) {
+            var connectionId = connection.connectionId;
+            if (ExistPlayerData(connectionId)) {
+                playerDictionary.Remove(connectionId);
+            }
         }
     }
 }

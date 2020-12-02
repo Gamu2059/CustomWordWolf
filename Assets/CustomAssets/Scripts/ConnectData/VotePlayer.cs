@@ -1,4 +1,5 @@
-﻿using Mirror;
+﻿using System;
+using Mirror;
 using UniRx;
 
 namespace ConnectData {
@@ -7,23 +8,27 @@ namespace ConnectData {
             /// <summary>
             /// 投票先のプレイヤーのID
             /// </summary>
-            public uint VoteForwardPlayerNetId;
+            public int VoteForwardPlayerConnectionId;
         }
         
         public struct Response : NetworkMessage {
             public Result Result;
+            public Exception Exception;
         }
         
         public enum Result {
+            FailureUnknown,
             Succeed,
-            Failure,
+            FailureNonExistPlayer,
+            FailureNoJoinRoom,
+            FailureNoPlaying,
         }
         
         public struct SendRoom : NetworkMessage {
             /// <summary>
             /// 投票元のプレイヤーのID
             /// </summary>
-            public uint VoteOriginPlayerNetId;
+            public int VoteOriginPlayerConnectionId;
         }
     }
 }

@@ -1,14 +1,17 @@
-﻿using UnityEngine.PlayerLoop;
+﻿using Mirror;
+using UnityEngine.PlayerLoop;
 
 namespace ManagedData {
     public class PlayerData {
+        public NetworkConnection Connection { get; }
         public string PlayerName { get; private set; }
 
-        public PlayerData(string playerName) {
-            UpdatePlayerName(playerName);
+        public PlayerData(NetworkConnection connection, string playerName) {
+            Connection = connection;
+            ApplyPlayerName(playerName);
         }
 
-        public void UpdatePlayerName(string playerName) {
+        public void ApplyPlayerName(string playerName) {
             PlayerName = playerName;
         }
     }

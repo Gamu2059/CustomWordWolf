@@ -1,19 +1,22 @@
-﻿using Mirror;
+﻿using System;
+using Mirror;
 
 namespace ConnectData {
-    public class LoadGameScene {
+    public class LeaveRoom {
         public struct Request : NetworkMessage {
-            
         }
         
         public struct Response : NetworkMessage {
             public Result Result;
-            public bool IsHost;
+            public Exception Exception;
         }
         
         public enum Result {
+            FailureUnknown,
             Succeed,
-            Failure,
+            FailureNonExistPlayer,
+            FailureNoJoinRoom,
+            FailureLeaveRoom,
         }
     }
 }

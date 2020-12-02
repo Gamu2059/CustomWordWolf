@@ -1,0 +1,18 @@
+﻿using ConnectData;
+using Manager;
+
+namespace Api {
+    public class GetRoomDetailApi : ApiBase<GetRoomDetailData.Request, GetRoomDetailData.Response> {
+        protected override void OnRequest(CustomNetworkManager networkManager, GetRoomDetailData.Request request) {
+            networkManager.RequestGetRoomDetailData(request);
+        }
+
+        protected override void BindResponse(CustomNetworkManager networkManager) {
+            networkManager.OnGetRoomDetailDataResponseEvent += OnGetResponseEvent;
+        }
+
+        protected override void UnbindResponse(CustomNetworkManager networkManager) {
+            networkManager.OnGetRoomDetailDataResponseEvent -= OnGetResponseEvent;
+        }
+    }
+}

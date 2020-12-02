@@ -13,7 +13,7 @@ namespace Lobby.JoinRoom.RoomList {
 
         public event Action<Guid> OnJoinRoomDecidedEvent;
 
-        public void Initialize(ConnectRoomData roomData) {
+        public void Initialize(RoomSimpleData roomData) {
             view.Initialize(roomData);
             view.JoinRoomObservable.Subscribe(_ => OnJoinRoomDecidedEvent?.Invoke(roomData.RoomGuid)).AddTo(gameObject);
         }

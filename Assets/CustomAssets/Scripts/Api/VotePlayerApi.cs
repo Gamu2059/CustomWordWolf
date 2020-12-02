@@ -8,11 +8,11 @@ namespace Api {
         }
 
         protected override void BindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnVotePlayerResponse += OnResponse;
+            networkManager.OnVotePlayerResponseEvent += OnGetResponseEvent;
         }
 
         protected override void UnbindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnVotePlayerResponse -= OnResponse;
+            networkManager.OnVotePlayerResponseEvent -= OnGetResponseEvent;
         }
     }
 }

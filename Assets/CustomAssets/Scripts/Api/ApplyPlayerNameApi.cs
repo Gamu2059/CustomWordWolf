@@ -4,15 +4,15 @@ using Manager;
 namespace Api {
     public class ApplyPlayerNameApi : ApiBase<ApplyPlayerName.Request, ApplyPlayerName.Response> {
         protected override void OnRequest(CustomNetworkManager networkManager, ApplyPlayerName.Request request) {
-            networkManager.RequestApplyName(request);
+            networkManager.RequestApplyPlayerName(request);
         }
 
         protected override void BindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnApplyPlayerNameResponse += OnResponse;
+            networkManager.OnApplyPlayerNameResponseEvent += OnGetResponseEvent;
         }
 
         protected override void UnbindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnApplyPlayerNameResponse -= OnResponse;
+            networkManager.OnApplyPlayerNameResponseEvent -= OnGetResponseEvent;
         }
     }
 }

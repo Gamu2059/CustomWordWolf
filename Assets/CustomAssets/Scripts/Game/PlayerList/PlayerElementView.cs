@@ -1,18 +1,30 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Common;
+using UI.Button;
+using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class PlayerElementView : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+namespace Game.PlayerList {
+    public class PlayerElementView : MonoBehaviour {
+        [SerializeField]
+        private Text playerNameText;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        [SerializeField]
+        private CustomButton voteButton;
+
+        [SerializeField]
+        private RectTransform votedRectT;
+
+        public IObservable<Unit> VoteObservable => voteButton.Button.OnClickAsObservable();
+
+        public void Initialize(string playerName) {
+            playerNameText.text = playerName;
+
+            // なぜかスケールが変わるので1にする
+            transform.localScale = Vector3.one;
+        }
     }
 }

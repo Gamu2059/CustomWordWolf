@@ -23,10 +23,13 @@ namespace Lobby.JoinRoom.RoomList {
 
         public IObservable<Unit> JoinRoomObservable => joinRoomButton.Button.OnClickAsObservable();
 
-        public void Initialize(ConnectRoomData roomData) {
+        public void Initialize(RoomSimpleData roomData) {
             roomNameText.text = roomData.RoomName;
             hostNameText.text = roomData.HostName;
             roomMemberNumText.text = $"{roomData.MemberNum}/{roomData.MaxMemberNum}人";
+
+            // なぜか分からないけどスケールがおかしくなることがあるので1にする
+            transform.localScale = Vector3.one;
         }
     }
 }

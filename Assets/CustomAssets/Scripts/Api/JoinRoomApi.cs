@@ -8,11 +8,11 @@ namespace Api {
         }
 
         protected override void BindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnJoinRoomResponse += OnResponse;
+            networkManager.OnJoinRoomResponseEvent += OnGetResponseEvent;
         }
 
         protected override void UnbindResponse(CustomNetworkManager networkManager) {
-            networkManager.OnJoinRoomResponse -= OnResponse;
+            networkManager.OnJoinRoomResponseEvent -= OnGetResponseEvent;
         }
     }
 }

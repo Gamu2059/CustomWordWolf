@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using Api;
+using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Lobby.JoinRoom.RoomList {
-    public class JoinRoomListPresenter : MonoBehaviour {
+    public class JoinRoomListPresenter : MonoBehaviour, Initializable {
         [SerializeField]
         private JoinRoomListView view;
 
@@ -37,8 +38,8 @@ namespace Lobby.JoinRoom.RoomList {
             view.SetActiveNoRoom(true);
 
             var roomListApi = new RoomListApi();
-            var roomListResponse = await roomListApi.Request(new ConnectData.RoomList.Request());
-            if (roomListResponse.Result != ConnectData.RoomList.Result.Succeed) {
+            var roomListResponse = await roomListApi.Request(new ConnectData.GetRoomList.Request());
+            if (roomListResponse.Result != ConnectData.GetRoomList.Result.Succeed) {
                 return;
             }
 
@@ -49,7 +50,7 @@ namespace Lobby.JoinRoom.RoomList {
             view.SetActiveNoRoom(false);
             foreach (var roomData in roomListResponse.RoomDataList) {
                 var element = Instantiate(elementPrefab);
-                element.transform.SetParent(transform);
+                element.transform.SetParent(layoutGroup.transform);
                 element.Initialize(roomData);
                 element.OnJoinRoomDecidedEvent += guid => OnJoinRoomDecidedEvent?.Invoke(guid);
                 elements.Add(element);
