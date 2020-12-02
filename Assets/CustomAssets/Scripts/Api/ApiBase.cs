@@ -29,7 +29,7 @@ namespace Api {
 
         protected abstract void UnbindResponse(CustomNetworkManager networkManager);
         
-        protected void OnGetResponseEventEventEventEventEventEventEvent(TResponse responseData) {
+        protected void OnGetResponseEvent(TResponse responseData) {
             response = responseData;
             isReserveResponse = true;
         }

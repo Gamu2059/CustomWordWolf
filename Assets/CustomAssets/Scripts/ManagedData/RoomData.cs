@@ -237,5 +237,21 @@ namespace ManagedData {
                 PlayerDataList = playerDataList,
             };
         }
+
+        public ChangeGameTime.SendRoom CreateGameTimeSendData() {
+            return new ChangeGameTime.SendRoom {
+                LowerLimit = IsLowerLimitGameTime,
+                UpperLimit = IsUpperLimitGameTime,
+                NewGameTime = VariableArg.GameTime,
+            };
+        }
+
+        public ChangeWolfNum.SendRoom CreateWolfNumSendData() {
+            return new ChangeWolfNum.SendRoom {
+                LowerLimit = IsLowerLimitWolfNum,
+                UpperLimit = IsUpperLimitWolfNum,
+                NewWolfNum = VariableArg.WolfNum,
+            };
+        }
     }
 }

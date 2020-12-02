@@ -142,6 +142,9 @@ namespace Manager {
             NetworkServer.RegisterHandler<JoinRoom.Request>(RequestedJoinRoom);
             NetworkServer.RegisterHandler<LeaveRoom.Request>(RequestedLeaveRoom);
 
+            NetworkServer.RegisterHandler<ChangeGameTime.Request>(RequestedChangeGameTime);
+            NetworkServer.RegisterHandler<ChangeWolfNum.Request>(RequestedChangeWolfNum);
+
             NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
             NetworkServer.RegisterHandler<VotePlayer.Request>(RequestedVotePlayer);
         }
@@ -155,10 +158,15 @@ namespace Manager {
             NetworkClient.RegisterHandler<JoinRoom.Response>(ResponseJoinRoom);
             NetworkClient.RegisterHandler<LeaveRoom.Response>(ResponseLeaveRoom);
 
+            NetworkClient.RegisterHandler<ChangeGameTime.Response>(ResponseChangeGameTime);
+            NetworkClient.RegisterHandler<ChangeWolfNum.Response>(ResponseChangeWolfNum);
+
             NetworkClient.RegisterHandler<StartGame.Response>(ResponseStartGame);
             NetworkClient.RegisterHandler<VotePlayer.Response>(ResponseVotePlayer);
 
             NetworkClient.RegisterHandler<UpdateMember.SendRoom>(ReceiveUpdateMember);
+            NetworkClient.RegisterHandler<ChangeGameTime.SendRoom>(ReceiveChangeGameTime);
+            NetworkClient.RegisterHandler<ChangeWolfNum.SendRoom>(ReceiveChangeWolfNum);
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
             NetworkClient.RegisterHandler<TimeOver.SendRoom>(ReceiveTimeOver);
             NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
@@ -595,8 +603,8 @@ namespace Manager {
                 msg.Result = GetRoomDetailData.Result.Succeed;
                 msg.IsHost = id == roomData.HostConnectionId;
                 msg.RoomData = roomData.CreateRoomDetailData();
-                msg.GameTime = roomData.VariableArg.GameTime;
-                msg.WolfNum = roomData.VariableArg.WolfNum;
+                msg.GameTime = roomData.CreateGameTimeSendData();
+                msg.WolfNum = roomData.CreateWolfNumSendData();
                 connection.Send(msg);
             } catch (Exception e) {
                 Debug.LogErrorFormat("[RequestedGetRoomDetailData] 予期せぬエラーが発生しました\nid : {0}", id);
@@ -628,6 +636,7 @@ namespace Manager {
         /// 制限時間を変更する。
         /// </summary>
         private void RequestedChangeGameTime(NetworkConnection connection, ChangeGameTime.Request request) {
+            Debug.Log("RequestedChangeGameTime");
             var msg = new ChangeGameTime.Response();
             var id = connection.connectionId;
             RoomData roomData;
@@ -683,11 +692,7 @@ namespace Manager {
         /// サーバから制限時間の変更を通知する。
         /// </summary>
         private void SendRoomChangeGameTime(RoomData roomData) {
-            var msg = new ChangeGameTime.SendRoom();
-            msg.IsLowerLimit = roomData.IsLowerLimitGameTime;
-            msg.IsUpperLimit = roomData.IsUpperLimitGameTime;
-            msg.NewGameTime = roomData.VariableArg.GameTime;
-
+            var msg = roomData.CreateGameTimeSendData();
             foreach (var member in roomData.GetAllMemberConnection()) {
                 member.Send(msg);
             }
@@ -775,11 +780,7 @@ namespace Manager {
         /// サーバから人狼の人数の変更を通知する。
         /// </summary>
         private void SendRoomChangeWolfNum(RoomData roomData) {
-            var msg = new ChangeWolfNum.SendRoom();
-            msg.IsLowerLimit = roomData.IsLowerLimitWolfNum;
-            msg.IsUpperLimit = roomData.IsUpperLimitWolfNum;
-            msg.NewWolfNum = roomData.VariableArg.WolfNum;
-
+            var msg = roomData.CreateWolfNumSendData();
             foreach (var member in roomData.GetAllMemberConnection()) {
                 member.Send(msg);
             }

@@ -25,6 +25,7 @@ namespace Game.Ready {
             gameObject.SetActive(true);
             leaveRoomButton.Show();
             startGameButton.Show();
+            SetActiveStartGameButton(false);
         }
 
         public async UniTask HideAsync() {

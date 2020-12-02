@@ -17,8 +17,10 @@ namespace ConnectData {
         }
 
         public struct SendRoom : NetworkMessage, IOptionMessage {
-            public bool IsLowerLimit { get; set; }
-            public bool IsUpperLimit { get; set; }
+            public bool IsLowerLimit => LowerLimit;
+            public bool IsUpperLimit => UpperLimit;
+            public bool LowerLimit;
+            public bool UpperLimit;
             public int NewGameTime;
         }
 

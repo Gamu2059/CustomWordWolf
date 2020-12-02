@@ -6,16 +6,16 @@ namespace ConnectData {
         public struct Request : NetworkMessage {
             public Guid RoomGuid;
         }
-        
+
         public struct Response : NetworkMessage {
             public Result Result;
             public Exception Exception;
             public bool IsHost;
             public RoomDetailData RoomData;
-            public int GameTime;
-            public int WolfNum;
+            public ChangeGameTime.SendRoom GameTime;
+            public ChangeWolfNum.SendRoom WolfNum;
         }
-        
+
         public enum Result {
             FailureUnknown,
             Succeed,

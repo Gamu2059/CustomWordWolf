@@ -5,6 +5,7 @@ using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Game.PlayerList;
+using Game.Ready.Option;
 using UniRx;
 using UnityEngine;
 
@@ -24,6 +25,9 @@ namespace Game.Ready {
         [SerializeField]
         private PlayerListPresenter listPresenter;
 
+        [SerializeField]
+        private OptionPresenter optionPresenter;
+
         private StateMachine<GameState> parentStateMachine;
         private CompositeDisposable viewDisposable;
         private IDisposable updateMemberDisposable;
@@ -33,6 +37,7 @@ namespace Game.Ready {
 
         public void Initialize() {
             listPresenter.Initialize();
+            optionPresenter.Initialize();
         }
 
         public void InjectStateMachine(StateMachine<GameState> stateMachine) {
@@ -54,12 +59,20 @@ namespace Game.Ready {
 
             var getRoomDetailApi = new GetRoomDetailApi();
             var response = await getRoomDetailApi.Request(new GetRoomDetailData.Request {RoomGuid = readyArg.RoomGuid});
+
+            await optionPresenter.ShowAsync();
+            optionPresenter.OnChangeGameTime(response.GameTime);
+            optionPresenter.OnChangeWolfNum(response.WolfNum);
+
             if (response.Result == GetRoomDetailData.Result.Succeed) {
                 listPresenter.SetMember(response.RoomData);
+                OnUpdateHostUi(response.IsHost, response.RoomData.PlayerDataList.Count);
             }
         }
 
         public async UniTask StateOutAsync() {
+            await optionPresenter.HideAsync();
+
             startGameDisposable?.Dispose();
             startGameDisposable = null;
 
@@ -93,10 +106,12 @@ namespace Game.Ready {
 
         private void OnUpdateMember(UpdateMember.SendRoom data) {
             listPresenter.UpdateMember(data.RoomData);
+            OnUpdateHostUi(data.IsHost, data.RoomData.PlayerDataList.Count);
         }
 
-        private void ApplyViewOnUpdateMember(RoomDetailData data) {
-            
+        private void OnUpdateHostUi(bool isHost, int memberNum) {
+            view.SetActiveStartGameButton(isHost && memberNum > 1);
+            optionPresenter.SetActiveOperatorButton(isHost);
         }
 
         private void OnStartGame(StartGame.SendRoom data) {
