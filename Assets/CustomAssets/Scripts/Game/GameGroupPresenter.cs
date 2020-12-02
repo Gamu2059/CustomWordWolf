@@ -24,6 +24,9 @@ namespace Game {
         [SerializeField]
         private ReadyPresenter readyPresenter;
 
+        [SerializeField]
+        private PlayPresenter playPresenter;
+
         private StateMachine<GroupState> parentStateMachine;
 
         protected override void OnInitialize() {
@@ -37,14 +40,17 @@ namespace Game {
 
         private void InitializeChild() {
             readyPresenter.Initialize();
+            playPresenter.Initialize();
         }
 
         private void BindState() {
             StateDictionary.Add(GameState.Ready, readyPresenter);
+            StateDictionary.Add(GameState.Play, playPresenter);
         }
 
         private void InjectStateMachine() {
             readyPresenter.InjectStateMachine(StateMachine);
+            playPresenter.InjectStateMachine(StateMachine);
         }
 
         public void InjectStateMachine(StateMachine<GroupState> stateMachine) {

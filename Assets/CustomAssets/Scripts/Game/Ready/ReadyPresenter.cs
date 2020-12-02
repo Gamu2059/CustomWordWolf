@@ -29,6 +29,8 @@ namespace Game.Ready {
         private OptionPresenter optionPresenter;
 
         private StateMachine<GameState> parentStateMachine;
+        private ReadyModel model;
+
         private CompositeDisposable viewDisposable;
         private IDisposable updateMemberDisposable;
         private IDisposable startGameDisposable;
@@ -36,6 +38,7 @@ namespace Game.Ready {
         public event Action OnLeaveRoomEvent;
 
         public void Initialize() {
+            model = new ReadyModel();
             listPresenter.Initialize();
             optionPresenter.Initialize();
         }
@@ -65,6 +68,7 @@ namespace Game.Ready {
             optionPresenter.OnChangeWolfNum(response.WolfNum);
 
             if (response.Result == GetRoomDetailData.Result.Succeed) {
+                model.SetRoomData(response.RoomData);
                 listPresenter.SetMember(response.RoomData);
                 OnUpdateHostUi(response.IsHost, response.RoomData.PlayerDataList.Count);
             }
@@ -105,6 +109,7 @@ namespace Game.Ready {
         }
 
         private void OnUpdateMember(UpdateMember.SendRoom data) {
+            model.SetRoomData(data.RoomData);
             listPresenter.UpdateMember(data.RoomData);
             OnUpdateHostUi(data.IsHost, data.RoomData.PlayerDataList.Count);
         }
@@ -115,7 +120,12 @@ namespace Game.Ready {
         }
 
         private void OnStartGame(StartGame.SendRoom data) {
-            parentStateMachine.RequestChangeState(GameState.Play);
+            var arg = new PlayArg();
+            arg.GameTime = data.GameTime;
+            arg.Theme = data.Theme;
+            arg.GameStartDateTime = data.GameStartDateTime;
+            arg.RoomData = model.RoomData;
+            parentStateMachine.RequestChangeState(GameState.Play, arg);
         }
     }
 }
