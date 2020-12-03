@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Common;
 using Mirror;
 
@@ -16,6 +17,9 @@ namespace ConnectData {
             public string Theme;
             public int GameTime;
             public DateTime GameStartDateTime;
+            public string PeopleTheme;
+            public string WolfTheme;
+            public List<int> WolfMemberList;
         }
 
         public enum Result {

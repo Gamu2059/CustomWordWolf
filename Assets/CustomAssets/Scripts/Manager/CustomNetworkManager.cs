@@ -140,7 +140,6 @@ namespace Manager {
             NetworkServer.RegisterHandler<ChangeWolfNum.Request>(RequestedChangeWolfNum);
 
             NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
-            NetworkServer.RegisterHandler<VotePlayer.Request>(RequestedVotePlayer);
         }
 
         private void InitializeClient() {
@@ -156,14 +155,11 @@ namespace Manager {
             NetworkClient.RegisterHandler<ChangeWolfNum.Response>(ResponseChangeWolfNum);
 
             NetworkClient.RegisterHandler<StartGame.Response>(ResponseStartGame);
-            NetworkClient.RegisterHandler<VotePlayer.Response>(ResponseVotePlayer);
 
             NetworkClient.RegisterHandler<UpdateMember.SendRoom>(ReceiveUpdateMember);
             NetworkClient.RegisterHandler<ChangeGameTime.SendRoom>(ReceiveChangeGameTime);
             NetworkClient.RegisterHandler<ChangeWolfNum.SendRoom>(ReceiveChangeWolfNum);
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
-            NetworkClient.RegisterHandler<TimeOver.SendRoom>(ReceiveTimeOver);
-            NetworkClient.RegisterHandler<VotePlayer.SendRoom>(ReceiveVotePlayer);
         }
 
         private void InitializePlayerDataOnServer(NetworkConnection connection) {
@@ -851,18 +847,15 @@ namespace Manager {
             }
 
             SendRoomStartGame(roomData);
-            roomData.OnTimeOverEvent += SendRoomTimeOver;
         }
 
         /// <summary>
         /// サーバからゲーム開始を通知する。
         /// </summary>
         private void SendRoomStartGame(RoomData roomData) {
+            var msg = roomData.CreateStartGameSendData();
             foreach (var member in roomData.GetAllMemberConnection()) {
-                var msg = new StartGame.SendRoom();
                 msg.Theme = roomData.GetTheme(member.connectionId);
-                msg.GameTime = roomData.VariableArg.GameTime;
-                msg.GameStartDateTime = roomData.GameStartDateTime;
                 member.Send(msg);
             }
         }
@@ -871,112 +864,6 @@ namespace Manager {
 
         private void ReceiveStartGame(NetworkConnection connection, StartGame.SendRoom data) {
             OnStartGameReceiveEvent?.Invoke(data);
-        }
-
-        #endregion
-
-        #region Send Room Time Over
-
-        /// <summary>
-        /// サーバから時間切れを通知する。
-        /// </summary>
-        private void SendRoomTimeOver(RoomData roomData) {
-            roomData.OnTimeOverEvent -= SendRoomTimeOver;
-            var msg = roomData.CreateTimeOverSendData();
-            foreach (var member in roomData.GetAllMemberConnection()) {
-                member.Send(msg);
-            }
-        }
-
-        public event Action<TimeOver.SendRoom> OnTimeOverReceiveEvent;
-
-        private void ReceiveTimeOver(NetworkConnection connection, TimeOver.SendRoom data) {
-            OnTimeOverReceiveEvent?.Invoke(data);
-        }
-
-        #endregion
-
-        #region Request Vote Player
-
-        /// <summary>
-        /// 投票する。
-        /// </summary>
-        public void RequestVotePlayer(VotePlayer.Request request) {
-            NetworkClient.connection.Send(request);
-        }
-
-        public event Action<VotePlayer.Response> OnVotePlayerResponseEvent;
-
-        private void ResponseVotePlayer(NetworkConnection connection, VotePlayer.Response response) {
-            OnVotePlayerResponseEvent?.Invoke(response);
-        }
-
-        /// <summary>
-        /// 投票する。
-        /// </summary>
-        private void RequestedVotePlayer(NetworkConnection connection, VotePlayer.Request request) {
-            var msg = new VotePlayer.Response();
-            var id = connection.connectionId;
-            RoomData roomData;
-
-            try {
-                // プレイヤーが存在しているかどうかチェック
-                if (!playerDataHolder.ExistPlayerData(id)) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] 存在しないプレイヤーが指定されました\nid : {0}", id);
-                    msg.Result = VotePlayer.Result.FailureNonExistPlayer;
-                    connection.Send(msg);
-                    return;
-                }
-
-                // プレイヤーが部屋にいるかどうかチェック
-                if (!roomDataHolder.ExistRoomByContainPlayer(id)) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] プレイヤーはいずれの部屋にも入っていません\nid : {0}", id);
-                    msg.Result = VotePlayer.Result.FailureNoJoinRoom;
-                    connection.Send(msg);
-                    return;
-                }
-
-                roomData = roomDataHolder.GetRoomDataByContainPlayer(id);
-
-                // ゲームを開始しているかどうかチェック
-                if (!roomData.IsPlaying) {
-                    Debug.LogWarningFormat("[RequestedVotePlayer] ゲームはまだ開始していません\nid : {0}", id);
-                    msg.Result = VotePlayer.Result.FailureNoPlaying;
-                    connection.Send(msg);
-                    return;
-                }
-
-                roomData.VotePlayer(id, request.VoteForwardPlayerConnectionId);
-
-                msg.Result = VotePlayer.Result.Succeed;
-                connection.Send(msg);
-            } catch (Exception e) {
-                Debug.LogErrorFormat("[RequestedVotePlayer] 予期せぬエラーが発生しました\nid : {0}", id);
-                Debug.LogException(e);
-                msg.Result = VotePlayer.Result.FailureUnknown;
-                msg.Exception = e;
-                connection.Send(msg);
-                return;
-            }
-
-            SendRoomVotePlayer(roomData, id);
-        }
-
-        /// <summary>
-        /// サーバから投票を通知する。
-        /// </summary>
-        private void SendRoomVotePlayer(RoomData roomData, int voteOriginPlayerConnectionId) {
-            foreach (var member in roomData.GetAllMemberConnection()) {
-                var msg = new VotePlayer.SendRoom();
-                msg.VoteOriginPlayerConnectionId = voteOriginPlayerConnectionId;
-                member.Send(msg);
-            }
-        }
-
-        public event Action<VotePlayer.SendRoom> OnVotePlayerReceiveEvent;
-
-        private void ReceiveVotePlayer(NetworkConnection connection, VotePlayer.SendRoom data) {
-            OnVotePlayerReceiveEvent?.Invoke(data);
         }
 
         #endregion
