@@ -21,7 +21,7 @@ namespace ManagedData {
                 var v = maxNum - pair.Value;
                 if (count <= pin && pin < count + v) {
                     themeTableDictionary[pair.Key]++;
-                    return pair.Key;
+                    return ShuffleTheme(pair.Key);
                 }
 
                 count += v;
@@ -30,7 +30,11 @@ namespace ManagedData {
             var minNum = themeTableDictionary.Values.Min();
             var minPair = themeTableDictionary.First(p => p.Value == minNum).Key;
             themeTableDictionary[minPair]++;
-            return minPair;
+            return ShuffleTheme(minPair);
+        }
+
+        private (string, string) ShuffleTheme((string, string) pair) {
+            return UnityEngine.Random.Range(0, 2) == 0 ? (pair.Item1, pair.Item2) : (pair.Item2, pair.Item1);
         }
     }
 }

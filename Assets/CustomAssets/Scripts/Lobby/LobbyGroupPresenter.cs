@@ -136,8 +136,19 @@ namespace Lobby {
         }
 
         private async void OnCreateRoomNameDecided(string roomName) {
+            var fetchThemeApi = new FetchThemeApi();
+            var fetchThemeResponse = await fetchThemeApi.Request();
+            if (fetchThemeResponse.Result == FetchTheme.Result.Failure) {
+                Debug.LogError("テーマの取得に失敗");
+                return;
+            }
+
             var createRoomApi = new CreateRoomApi();
-            var response = await createRoomApi.Request(new ConnectData.CreateRoom.Request {RoomName = roomName});
+            var request = new ConnectData.CreateRoom.Request {
+                RoomName = roomName,
+                ThemeData = fetchThemeResponse.ThemeData
+            };
+            var response = await createRoomApi.Request(request);
             if (response.Result == ConnectData.CreateRoom.Result.Succeed) {
                 parentStateMachine.RequestChangeState(GroupState.Game, new GameGroupArg {RoomGuid = response.RoomGuid});
             }
