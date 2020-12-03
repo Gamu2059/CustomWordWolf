@@ -1,5 +1,8 @@
-﻿using Common;
+﻿using System;
+using Common;
 using Cysharp.Threading.Tasks;
+using UI.Button;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,11 +16,17 @@ namespace Game {
         [SerializeField]
         private Text themeText;
 
+        [SerializeField]
+        private CustomButton backReadyButton;
+
+        public IObservable<Unit> BackReadyObservable => backReadyButton.Button.OnClickAsObservable();
+
         public void Initialize() {
         }
 
         public async UniTask ShowAsync() {
             gameObject.SetActive(true);
+            backReadyButton.Show();
         }
 
         public async UniTask HideAsync() {

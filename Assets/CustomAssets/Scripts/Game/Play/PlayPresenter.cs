@@ -4,6 +4,7 @@ using Common;
 using ConnectData;
 using Cysharp.Threading.Tasks;
 using Game.PlayerList;
+using Game.Ready;
 using Game.Result;
 using UniRx;
 using UnityEngine;
@@ -28,6 +29,7 @@ namespace Game {
         private StateMachine<GameState> parentStateMachine;
         private PlayModel model;
 
+        private CompositeDisposable viewDisposable;
         private CompositeDisposable modelDisposable;
 
         public void Initialize() {
@@ -42,6 +44,7 @@ namespace Game {
 
         public async UniTask StateInAsync(IChangeStateArg arg, bool isBack) {
             await view.ShowAsync();
+            SetViewEvents();
             SetModelEvents();
 
             if (arg is PlayArg playArg) {
@@ -53,7 +56,16 @@ namespace Game {
 
         public async UniTask StateOutAsync() {
             DisposeModelEvents();
+            DisposeViewEvents();
             await view.HideAsync();
+        }
+
+        private void SetViewEvents() {
+            viewDisposable = new CompositeDisposable(
+                view.BackReadyObservable
+                    .Subscribe(_ => BackReady())
+                    .AddTo(gameObject)
+            );
         }
 
         private void SetModelEvents() {
@@ -65,6 +77,11 @@ namespace Game {
                     .Subscribe(_ => OnTimeOver())
                     .AddTo(gameObject)
             );
+        }
+
+        private void DisposeViewEvents() {
+            viewDisposable?.Dispose();
+            viewDisposable = null;
         }
 
         private void DisposeModelEvents() {
@@ -79,6 +96,11 @@ namespace Game {
             arg.WolfTheme = model.PlayArg.StartGameData.WolfTheme;
             arg.WolfMemberList = model.PlayArg.StartGameData.WolfMemberList;
             parentStateMachine.RequestChangeState(GameState.Result, arg);
+        }
+
+        private void BackReady() {
+            parentStateMachine.RequestChangeState(GameState.Ready,
+                new ReadyArg {RoomGuid = model.PlayArg.RoomData.RoomGuid});
         }
     }
 }
