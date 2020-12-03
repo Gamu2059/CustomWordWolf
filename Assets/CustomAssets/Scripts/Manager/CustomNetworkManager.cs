@@ -44,12 +44,6 @@ namespace Manager {
         private PlayerDataHolder playerDataHolder;
         private RoomDataHolder roomDataHolder;
 
-        private List<(string, string)> themeList = new List<(string, string)> {
-            ("Java", "JavaScript"),
-            ("CyberAgent", "DeNA"),
-            ("ななさん", "さとこさん"),
-        };
-
         #endregion
 
         #region Server System Callbacks
@@ -350,7 +344,7 @@ namespace Manager {
                 constArg.WolfNumResolution = wolfNumResolution;
                 constArg.GameTimeRange = gameTimeRange;
                 constArg.WolfNumRange = wolfNumRange;
-                constArg.ThemeUnitList = themeList;
+                constArg.ThemeUnitList = request.ThemeData.Theme.Select(t => (t.Theme1, t.Theme2)).ToList();
 
                 var variableArg = new VariableArg();
                 variableArg.GameTime = defaultGameTime;
@@ -363,7 +357,7 @@ namespace Manager {
             } catch (Exception e) {
                 Debug.LogErrorFormat("[RequestedCreateRoom] 予期せぬエラーが発生しました\nid : {0}", id);
                 Debug.LogException(e);
-                msg.Result = CreateRoom.Result.FailureMultipleRoomHost;
+                msg.Result = CreateRoom.Result.FailureUnknown;
                 msg.Exception = e;
                 connection.Send(msg);
             }

@@ -659,10 +659,10 @@ PlayerSettings:
     m_VersionCode: 1
     m_VersionName: 
   apiCompatibilityLevel: 6
-  cloudProjectId: 
+  cloudProjectId: 6bb3b645-c580-4f1e-90e1-b7ad5c823686
   framebufferDepthMemorylessMode: 0
-  projectName: 
-  organizationId: 
+  projectName: MirrorProject
+  organizationId: gamu_i0317
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0

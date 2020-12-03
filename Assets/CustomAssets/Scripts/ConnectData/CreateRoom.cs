@@ -6,6 +6,7 @@ namespace ConnectData {
     public class CreateRoom {
         public struct Request : NetworkMessage {
             public string RoomName;
+            public ThemeData ThemeData;
         }
 
         public struct Response : NetworkMessage {
