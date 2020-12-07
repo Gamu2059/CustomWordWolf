@@ -125,9 +125,7 @@ namespace Game.Ready {
 
         private void OnStartGame(StartGame.SendRoom data) {
             var arg = new PlayArg();
-            arg.GameTime = data.GameTime;
-            arg.Theme = data.Theme;
-            arg.GameStartDateTime = data.GameStartDateTime;
+            arg.StartGameData = data;
             arg.RoomData = model.RoomData;
             parentStateMachine.RequestChangeState(GameState.Play, arg);
         }

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using Common;
 using Mirror;
 
 namespace ConnectData {
-    public class StartGame {
+    public class ShowMember {
         public struct Request : NetworkMessage {
         }
 
@@ -14,12 +12,6 @@ namespace ConnectData {
         }
 
         public struct SendRoom : NetworkMessage {
-            public string Theme;
-            public int GameTime;
-            public DateTime GameStartDateTime;
-            public string PeopleTheme;
-            public string WolfTheme;
-            public List<int> WolfMemberList;
         }
 
         public enum Result {

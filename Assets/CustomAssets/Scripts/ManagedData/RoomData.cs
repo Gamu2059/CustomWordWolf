@@ -254,8 +254,10 @@ namespace ManagedData {
             };
         }
 
-        public TimeOver.SendRoom CreateTimeOverSendData() {
-            return new TimeOver.SendRoom {
+        public StartGame.SendRoom CreateStartGameSendData() {
+            return new StartGame.SendRoom {
+                GameTime = VariableArg.GameTime,
+                GameStartDateTime = GameStartDateTime,
                 PeopleTheme = peopleTheme,
                 WolfTheme = wolfTheme,
                 WolfMemberList = wolfMemberList,
