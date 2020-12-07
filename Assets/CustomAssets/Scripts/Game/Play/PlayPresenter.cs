@@ -31,6 +31,7 @@ namespace Game {
 
         private CompositeDisposable viewDisposable;
         private CompositeDisposable modelDisposable;
+        private CompositeDisposable apiDisposable;
 
         public void Initialize() {
             model = new PlayModel();
@@ -46,6 +47,7 @@ namespace Game {
             await view.ShowAsync();
             SetViewEvents();
             SetModelEvents();
+            SetApiEvents();
 
             if (arg is PlayArg playArg) {
                 model.StartGame(playArg);
@@ -55,6 +57,8 @@ namespace Game {
         }
 
         public async UniTask StateOutAsync() {
+            model.Dispose();
+            DisposeApiEvents();
             DisposeModelEvents();
             DisposeViewEvents();
             await view.HideAsync();
@@ -62,8 +66,8 @@ namespace Game {
 
         private void SetViewEvents() {
             viewDisposable = new CompositeDisposable(
-                view.BackReadyObservable
-                    .Subscribe(_ => BackReady())
+                view.ShutOutGameObservable
+                    .Subscribe(_ => ShutOutGame().Forget())
                     .AddTo(gameObject)
             );
         }
@@ -79,6 +83,12 @@ namespace Game {
             );
         }
 
+        private void SetApiEvents() {
+            apiDisposable = new CompositeDisposable(
+                new ShutOutGameReceiver(OnShutOutGame)
+            );
+        }
+
         private void DisposeViewEvents() {
             viewDisposable?.Dispose();
             viewDisposable = null;
@@ -87,6 +97,11 @@ namespace Game {
         private void DisposeModelEvents() {
             modelDisposable?.Dispose();
             modelDisposable = null;
+        }
+
+        private void DisposeApiEvents() {
+            apiDisposable?.Dispose();
+            apiDisposable = null;
         }
 
         private void OnTimeOver() {
@@ -98,7 +113,15 @@ namespace Game {
             parentStateMachine.RequestChangeState(GameState.Result, arg);
         }
 
-        private void BackReady() {
+        private async UniTask ShutOutGame() {
+            var shutOutGameApi = new ShutOutGameApi();
+            await shutOutGameApi.Request(new ShutOutGame.Request());
+
+            parentStateMachine.RequestChangeState(GameState.Ready,
+                new ReadyArg {RoomGuid = model.PlayArg.RoomData.RoomGuid});
+        }
+
+        private void OnShutOutGame(ShutOutGame.SendRoom data) {
             parentStateMachine.RequestChangeState(GameState.Ready,
                 new ReadyArg {RoomGuid = model.PlayArg.RoomData.RoomGuid});
         }

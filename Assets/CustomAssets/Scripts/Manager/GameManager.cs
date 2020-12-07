@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Common;
 using Game;
-using Guide;
 using Lobby;
 using Title;
 using UnityEngine;
@@ -19,9 +18,6 @@ namespace Manager {
 
         [SerializeField]
         private GameGroupPresenter gamePresenter;
-
-        [SerializeField]
-        private GuideGroupPresenter guidePresenter;
 
         private void Start() {
             Initialize();

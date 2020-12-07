@@ -272,6 +272,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1782422383622926579}
+  - component: {fileID: 8111467714746875794}
+  - component: {fileID: 5894479914012334235}
   m_Layer: 5
   m_Name: Elem-Result
   m_TagString: Untagged
@@ -300,3 +302,31 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 500, y: 80}
   m_Pivot: {x: 0.5, y: 1}
+--- !u!114 &8111467714746875794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8590899726480878660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de267a6f24634de297d0c441de276679, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  view: {fileID: 5894479914012334235}
+--- !u!114 &5894479914012334235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8590899726480878660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2ad2cc3896d46569c292fabbe227d9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerNameText: {fileID: 1022132461838810444}
+  peopleColor: {r: 0.87, g: 0.67207503, b: 0.5307, a: 1}
+  wolfColor: {r: 1, g: 0.3404222, b: 0.2028302, a: 1}

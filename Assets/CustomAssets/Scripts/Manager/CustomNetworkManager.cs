@@ -140,6 +140,9 @@ namespace Manager {
             NetworkServer.RegisterHandler<ChangeWolfNum.Request>(RequestedChangeWolfNum);
 
             NetworkServer.RegisterHandler<StartGame.Request>(RequestedStartGame);
+            NetworkServer.RegisterHandler<ShutOutGame.Request>(RequestedShutOutGame);
+            NetworkServer.RegisterHandler<ShowTheme.Request>(RequestedShowTheme);
+            NetworkServer.RegisterHandler<ShowMember.Request>(RequestedShowMember);
         }
 
         private void InitializeClient() {
@@ -155,11 +158,17 @@ namespace Manager {
             NetworkClient.RegisterHandler<ChangeWolfNum.Response>(ResponseChangeWolfNum);
 
             NetworkClient.RegisterHandler<StartGame.Response>(ResponseStartGame);
+            NetworkClient.RegisterHandler<ShutOutGame.Response>(ResponseShutOutGame);
+            NetworkClient.RegisterHandler<ShowTheme.Response>(ResponseShowTheme);
+            NetworkClient.RegisterHandler<ShowMember.Response>(ResponseShowMember);
 
             NetworkClient.RegisterHandler<UpdateMember.SendRoom>(ReceiveUpdateMember);
             NetworkClient.RegisterHandler<ChangeGameTime.SendRoom>(ReceiveChangeGameTime);
             NetworkClient.RegisterHandler<ChangeWolfNum.SendRoom>(ReceiveChangeWolfNum);
             NetworkClient.RegisterHandler<StartGame.SendRoom>(ReceiveStartGame);
+            NetworkClient.RegisterHandler<ShutOutGame.SendRoom>(ReceiveShutOutGame);
+            NetworkClient.RegisterHandler<ShowTheme.SendRoom>(ReceiveShowTheme);
+            NetworkClient.RegisterHandler<ShowMember.SendRoom>(ReceiveShowMember);
         }
 
         private void InitializePlayerDataOnServer(NetworkConnection connection) {
@@ -864,6 +873,250 @@ namespace Manager {
 
         private void ReceiveStartGame(NetworkConnection connection, StartGame.SendRoom data) {
             OnStartGameReceiveEvent?.Invoke(data);
+        }
+
+        #endregion
+
+        #region Request Shut Out Game
+
+        /// <summary>
+        /// ゲームを中断する。
+        /// </summary>
+        public void RequestShutOutGame(ShutOutGame.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        public event Action<ShutOutGame.Response> OnShutOutGameResponseEvent;
+
+        private void ResponseShutOutGame(NetworkConnection connection, ShutOutGame.Response response) {
+            OnShutOutGameResponseEvent?.Invoke(response);
+        }
+
+        /// <summary>
+        /// ゲームを中断する。
+        /// </summary>
+        private void RequestedShutOutGame(NetworkConnection connection, ShutOutGame.Request request) {
+            var msg = new ShutOutGame.Response();
+            var id = connection.connectionId;
+            RoomData roomData;
+
+            try {
+                // プレイヤーが存在しているかどうかチェック
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedShutOutGame] 存在しないプレイヤーが指定されました\nid : {0}", id);
+                    msg.Result = ShutOutGame.Result.FailureNonExistPlayer;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // 部屋が存在しているかどうかチェック
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedShutOutGame] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
+                    msg.Result = ShutOutGame.Result.FailureNonHost;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // ゲームを開始しているかどうかチェック
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
+                if (!roomData.IsPlaying) {
+                    Debug.LogWarningFormat("[RequestedShutOutGame] ゲームは開始されていません\nid : {0}", id);
+                    msg.Result = ShutOutGame.Result.FailureNoPlaying;
+                    connection.Send(msg);
+                    return;
+                }
+
+                msg.Result = ShutOutGame.Result.Succeed;
+                connection.Send(msg);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[RequestedShutOutGame] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+                msg.Result = ShutOutGame.Result.FailureUnknown;
+                msg.Exception = e;
+                connection.Send(msg);
+                return;
+            }
+
+            // ホストの場合だけゲームを止めて一斉送信する
+            if (id == roomData.HostConnectionId) {
+                roomData.StopGame();
+                SendRoomShutOutGame(roomData);
+            }
+        }
+
+        /// <summary>
+        /// サーバからゲーム中断を通知する。
+        /// </summary>
+        private void SendRoomShutOutGame(RoomData roomData) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
+                member.Send(new ShutOutGame.SendRoom());
+            }
+        }
+
+        public event Action<ShutOutGame.SendRoom> OnShutOutGameReceiveEvent;
+
+        private void ReceiveShutOutGame(NetworkConnection connection, ShutOutGame.SendRoom data) {
+            OnShutOutGameReceiveEvent?.Invoke(data);
+        }
+
+        #endregion
+
+        #region Request Show Theme
+
+        /// <summary>
+        /// お題を表示する。
+        /// </summary>
+        public void RequestShowTheme(ShowTheme.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        public event Action<ShowTheme.Response> OnShowThemeResponseEvent;
+
+        private void ResponseShowTheme(NetworkConnection connection, ShowTheme.Response response) {
+            OnShowThemeResponseEvent?.Invoke(response);
+        }
+
+        /// <summary>
+        /// お題を表示する。
+        /// </summary>
+        private void RequestedShowTheme(NetworkConnection connection, ShowTheme.Request request) {
+            var msg = new ShowTheme.Response();
+            var id = connection.connectionId;
+            RoomData roomData;
+
+            try {
+                // プレイヤーが存在しているかどうかチェック
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedShowTheme] 存在しないプレイヤーが指定されました\nid : {0}", id);
+                    msg.Result = ShowTheme.Result.FailureNonExistPlayer;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // 部屋が存在しているかどうかチェック
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedShowTheme] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
+                    msg.Result = ShowTheme.Result.FailureNonHost;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // ゲームを開始しているかどうかチェック
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
+                if (roomData.IsPlaying) {
+                    Debug.LogWarningFormat("[RequestedShowTheme] 既にゲームが開始されています\nid : {0}", id);
+                    msg.Result = ShowTheme.Result.FailurePlaying;
+                    connection.Send(msg);
+                    return;
+                }
+
+                msg.Result = ShowTheme.Result.Succeed;
+                connection.Send(msg);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[RequestedShowTheme] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+                msg.Result = ShowTheme.Result.FailureUnknown;
+                msg.Exception = e;
+                connection.Send(msg);
+                return;
+            }
+
+            SendRoomShowTheme(roomData);
+        }
+
+        /// <summary>
+        /// サーバからお題表示を通知する。
+        /// </summary>
+        private void SendRoomShowTheme(RoomData roomData) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
+                member.Send(new ShowTheme.SendRoom());
+            }
+        }
+
+        public event Action<ShowTheme.SendRoom> OnShowThemeReceiveEvent;
+
+        private void ReceiveShowTheme(NetworkConnection connection, ShowTheme.SendRoom data) {
+            OnShowThemeReceiveEvent?.Invoke(data);
+        }
+
+        #endregion
+
+        #region Request Show Member
+
+        /// <summary>
+        /// 陣営を表示する。
+        /// </summary>
+        public void RequestShowMember(ShowMember.Request request) {
+            NetworkClient.connection.Send(request);
+        }
+
+        public event Action<ShowMember.Response> OnShowMemberResponseEvent;
+
+        private void ResponseShowMember(NetworkConnection connection, ShowMember.Response response) {
+            OnShowMemberResponseEvent?.Invoke(response);
+        }
+
+        /// <summary>
+        /// 陣営を表示する。
+        /// </summary>
+        private void RequestedShowMember(NetworkConnection connection, ShowMember.Request request) {
+            var msg = new ShowMember.Response();
+            var id = connection.connectionId;
+            RoomData roomData;
+
+            try {
+                // プレイヤーが存在しているかどうかチェック
+                if (!playerDataHolder.ExistPlayerData(id)) {
+                    Debug.LogWarningFormat("[RequestedShowMember] 存在しないプレイヤーが指定されました\nid : {0}", id);
+                    msg.Result = ShowMember.Result.FailureNonExistPlayer;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // 部屋が存在しているかどうかチェック
+                if (!roomDataHolder.ExistRoomByHostPlayer(id)) {
+                    Debug.LogWarningFormat("[RequestedShowMember] 指定したプレイヤーがホストである部屋が存在しません\nid : {0}", id);
+                    msg.Result = ShowMember.Result.FailureNonHost;
+                    connection.Send(msg);
+                    return;
+                }
+
+                // ゲームを開始しているかどうかチェック
+                roomData = roomDataHolder.GetRoomDataByHostPlayer(id);
+                if (roomData.IsPlaying) {
+                    Debug.LogWarningFormat("[RequestedShowMember] 既にゲームが開始されています\nid : {0}", id);
+                    msg.Result = ShowMember.Result.FailurePlaying;
+                    connection.Send(msg);
+                    return;
+                }
+
+                msg.Result = ShowMember.Result.Succeed;
+                connection.Send(msg);
+            } catch (Exception e) {
+                Debug.LogErrorFormat("[RequestedShowMember] 予期せぬエラーが発生しました\nid : {0}", id);
+                Debug.LogException(e);
+                msg.Result = ShowMember.Result.FailureUnknown;
+                msg.Exception = e;
+                connection.Send(msg);
+                return;
+            }
+
+            SendRoomShowMember(roomData);
+        }
+
+        /// <summary>
+        /// サーバから陣営表示を通知する。
+        /// </summary>
+        private void SendRoomShowMember(RoomData roomData) {
+            foreach (var member in roomData.GetAllMemberConnection()) {
+                member.Send(new ShowMember.SendRoom());
+            }
+        }
+
+        public event Action<ShowMember.SendRoom> OnShowMemberReceiveEvent;
+
+        private void ReceiveShowMember(NetworkConnection connection, ShowMember.SendRoom data) {
+            OnShowMemberReceiveEvent?.Invoke(data);
         }
 
         #endregion

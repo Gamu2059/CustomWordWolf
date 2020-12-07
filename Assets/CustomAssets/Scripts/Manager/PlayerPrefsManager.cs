@@ -7,7 +7,7 @@ namespace Common {
         
         public static string PlayerName {
             get {
-                return PlayerPrefs.GetString(PlayerNameKey, null);
+                return PlayerPrefs.GetString(PlayerNameKey, "こんにちは世界");
             }
             set {
                 PlayerPrefs.SetString(PlayerNameKey, value);

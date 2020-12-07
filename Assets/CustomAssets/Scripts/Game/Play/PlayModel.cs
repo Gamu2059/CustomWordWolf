@@ -4,7 +4,6 @@ using UniRx;
 
 namespace Game {
     public class PlayModel {
-        
         public PlayArg PlayArg { get; private set; }
 
         private ReactiveProperty<int> gameTime;
@@ -32,13 +31,12 @@ namespace Game {
                 .Where(t => t <= 0)
                 .Subscribe(_ => {
                     timerOver.OnNext(Unit.Default);
-                    TimeOverGame();
                 });
         }
 
-        private void TimeOverGame() {
-            timerOver?.Dispose();
-            timerOver = null;
+        public void Dispose() {
+            timeOverDisposable?.Dispose();
+            timeOverDisposable = null;
             gameTimeDisposable?.Dispose();
             gameTimeDisposable = null;
         }

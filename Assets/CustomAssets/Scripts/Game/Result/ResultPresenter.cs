@@ -39,6 +39,9 @@ namespace Game.Result {
         public void Initialize() {
             model = new ResultModel();
             view.Initialize();
+
+            peopleListPresenter.Initialize();
+            wolfListPresenter.Initialize();
         }
 
         public void InjectStateMachine(StateMachine<GameState> stateMachine) {
@@ -50,12 +53,23 @@ namespace Game.Result {
             SetViewEvents();
             SetApiEvents();
 
+            view.SetPeopleTheme("？？？");
+            view.SetWolfTheme("？？？");
+
+            peopleListPresenter.Refresh();
+            wolfListPresenter.Refresh();
+
             if (arg is ResultArg resultArg) {
-                model.SetRoomData(resultArg.RoomData);
-                view.SetPeopleTheme(resultArg.PeopleTheme);
-                view.SetWolfTheme(resultArg.WolfTheme);
-                
-                
+                model.SetResultArg(resultArg);
+
+                var getRoomDetailApi = new GetRoomDetailApi();
+                var response = await getRoomDetailApi.Request(new GetRoomDetailData.Request
+                    {RoomGuid = resultArg.RoomData.RoomGuid});
+
+                if (response.Result == GetRoomDetailData.Result.Succeed) {
+                    model.SetRoomData(response.RoomData);
+                    view.SetActiveHostButton(response.IsHost);
+                }
             }
         }
 
@@ -69,6 +83,12 @@ namespace Game.Result {
             viewDisposable = new CompositeDisposable(
                 view.BackObservable
                     .Subscribe(_ => BackReady())
+                    .AddTo(gameObject),
+                view.ShowThemeObservable
+                    .Subscribe(_ => ShowTheme())
+                    .AddTo(gameObject),
+                view.ShowMemberObservable
+                    .Subscribe(_ => ShowMember())
                     .AddTo(gameObject)
             );
         }
@@ -77,7 +97,9 @@ namespace Game.Result {
             // これらは、リザルトからプレイに直接遷移する可能性があるためにイベントを設定している
             apiDisposable = new CompositeDisposable(
                 new UpdateMemberReceiver(OnUpdateMember),
-                new StartGameReceiver(OnStartGame)
+                new StartGameReceiver(OnStartGame),
+                new ShowThemeReceiver(OnShowTheme),
+                new ShowMemberReceiver(OnShowMember)
             );
         }
 
@@ -95,8 +117,28 @@ namespace Game.Result {
             parentStateMachine.RequestChangeState(GameState.Ready, new ReadyArg {RoomGuid = model.RoomData.RoomGuid});
         }
 
+        private void ShowTheme() {
+            new ShowThemeApi().Request(new ShowTheme.Request()).Forget();
+        }
+
+        private void OnShowTheme(ShowTheme.SendRoom data) {
+            view.SetPeopleTheme(model.PeopleTheme);
+            view.SetWolfTheme(model.WolfTheme);
+        }
+
+        private void ShowMember() {
+            new ShowMemberApi().Request(new ShowMember.Request()).Forget();
+        }
+
+        private void OnShowMember(ShowMember.SendRoom data) {
+            Debug.LogFormat("roomData {0} wolf {1}", model.RoomData, model.WolfMemberList);
+            peopleListPresenter.ShowMember(model.RoomData, model.WolfMemberList, false);
+            wolfListPresenter.ShowMember(model.RoomData, model.WolfMemberList, true);
+        }
+
         private void OnUpdateMember(UpdateMember.SendRoom data) {
             model.SetRoomData(data.RoomData);
+            view.SetActiveHostButton(data.IsHost);
         }
 
         private void OnStartGame(StartGame.SendRoom data) {

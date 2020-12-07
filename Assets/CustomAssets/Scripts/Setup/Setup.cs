@@ -29,8 +29,9 @@ namespace Setup {
         private void Start() {
 #if !UNITY_SERVER
             NetworkManager.singleton.networkAddress = isDebug ? "localhost" : address;
-            serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
-            clientButton.OnClickAsObservable().Subscribe(_ => SceneManager.LoadScene(gameScene));
+            SceneManager.LoadScene(gameScene);
+            // serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
+            // clientButton.OnClickAsObservable().Subscribe(_ => SceneManager.LoadScene(gameScene));
 #endif
         }
     }

@@ -17,16 +17,16 @@ namespace Game {
         private Text themeText;
 
         [SerializeField]
-        private CustomButton backReadyButton;
+        private CustomButton shutOutGameButton;
 
-        public IObservable<Unit> BackReadyObservable => backReadyButton.Button.OnClickAsObservable();
+        public IObservable<Unit> ShutOutGameObservable => shutOutGameButton.Button.OnClickAsObservable();
 
         public void Initialize() {
         }
 
         public async UniTask ShowAsync() {
             gameObject.SetActive(true);
-            backReadyButton.Show();
+            shutOutGameButton.Show();
         }
 
         public async UniTask HideAsync() {
