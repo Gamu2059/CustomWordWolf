@@ -13,7 +13,7 @@ namespace Lobby.JoinRoom {
         private ReactiveProperty<string> playerNameProperty;
 
         /// <summary>
-        /// プレイヤー名のUniRxストリーム。
+        /// プレイヤー名のUniRxイベント。
         /// </summary>
         public IObservable<string> PlayerNamePropertyObservable => playerNameProperty;
 

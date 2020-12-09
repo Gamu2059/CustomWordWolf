@@ -135,16 +135,16 @@ namespace Lobby {
         private void BindChildrenEvents() {
             joinRoomPresenter.OnClickBackTitleEvent += OnClickBackTitle;
             joinRoomPresenter.OnClickJoinRoomEvent += OnClickJoinRoom;
-            editPlayerNamePresenter.OnPlayerNameEditedEvent += OnClickApplyPlayerName;
-            createRoomPresenter.OnCreateRoomNameDecidedEvent += OnClickCreateRoom;
+            editPlayerNamePresenter.OnClickApplyPlayerNameEvent += OnClickApplyPlayerName;
+            createRoomPresenter.OnClickCreateRoomEvent += OnClickCreateRoom;
         }
 
         /// <summary>
         /// 子要素のイベントを解消する。
         /// </summary>
         private void UnbindChildrenEvents() {
-            createRoomPresenter.OnCreateRoomNameDecidedEvent -= OnClickCreateRoom;
-            editPlayerNamePresenter.OnPlayerNameEditedEvent -= OnClickApplyPlayerName;
+            createRoomPresenter.OnClickCreateRoomEvent -= OnClickCreateRoom;
+            editPlayerNamePresenter.OnClickApplyPlayerNameEvent -= OnClickApplyPlayerName;
             joinRoomPresenter.OnClickJoinRoomEvent -= OnClickJoinRoom;
             joinRoomPresenter.OnClickBackTitleEvent -= OnClickBackTitle;
         }
@@ -213,7 +213,6 @@ namespace Lobby {
                 }
             }
         }
-
 
         /// <summary>
         /// 部屋を作成する。
