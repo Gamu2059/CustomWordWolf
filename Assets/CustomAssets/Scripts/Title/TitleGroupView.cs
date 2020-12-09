@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using Common;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -10,43 +8,42 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Title {
+    /// <summary>
+    /// タイトルに属するUIを管理する概念のViewコンポーネント。
+    /// </summary>
     public class TitleGroupView :
+        // MonoBehaviorを継承する
         MonoBehaviour,
+        // Initializeメソッドを持っている
         Initializable {
-        #region Inspector
-
-        [Header("Refer")]
         [SerializeField]
         private CustomButton startButton;
 
         [SerializeField]
-        private Image titleImage;
-
-        [SerializeField]
         private Image darkCutImage;
 
-        [Header("Param")]
         [SerializeField]
         private float fadeInDuration = 1;
 
-        #endregion
-
-        #region Field & Property
-
+        /// <summary>
+        /// スタートボタンのUniRxイベント。
+        /// </summary>
         public IObservable<Unit> StartObservable => startButton.Button.OnClickAsObservable();
 
-        private RectTransform titleRectT;
-
-        #endregion
-
+        /// <summary>
+        /// タイトルグループのViewを初期化する。
+        /// </summary>
         public void Initialize() {
-            titleRectT = titleImage.transform as RectTransform;
         }
 
+        /// <summary>
+        /// タイトルグループ全体の表示処理。
+        /// </summary>
         public async UniTask ShowAsync() {
             gameObject.SetActive(true);
             startButton.Show();
 
+            // DOTweenでフェードインさせる
             darkCutImage.color = Color.black;
             darkCutImage.raycastTarget = true;
             var tween = darkCutImage.DOColor(Color.clear, fadeInDuration).SetEase(Ease.Linear);
@@ -54,6 +51,9 @@ namespace Title {
             darkCutImage.raycastTarget = false;
         }
 
+        /// <summary>
+        /// タイトルグループ全体の非表示処理。
+        /// </summary>
         public async UniTask HideAsync() {
             gameObject.SetActive(false);
         }

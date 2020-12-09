@@ -9,6 +9,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Lobby.CreateRoom {
+    /// <summary>
+    /// 部屋一覧UIのViewコンポーネント。
+    /// </summary>
     public class CreateRoomView :
         MonoBehaviour,
         Initializable {

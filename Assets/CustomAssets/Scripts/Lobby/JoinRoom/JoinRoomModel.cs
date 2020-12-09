@@ -3,20 +3,40 @@ using Common;
 using UniRx;
 
 namespace Lobby.JoinRoom {
+    /// <summary>
+    /// 部屋参加UIのModel。
+    /// </summary>
     public class JoinRoomModel {
+        /// <summary>
+        /// プレイヤー名。
+        /// </summary>
+        private ReactiveProperty<string> playerNameProperty;
 
-        private ReactiveProperty<string> playerName;
-        public IObservable<string> PlayerNameObservable => playerName;
-        public string PlayerName => playerName.Value;
-        
+        /// <summary>
+        /// プレイヤー名のUniRxストリーム。
+        /// </summary>
+        public IObservable<string> PlayerNamePropertyObservable => playerNameProperty;
+
+        /// <summary>
+        /// プレイヤー名を取得する。
+        /// </summary>
+        public string PlayerName => playerNameProperty.Value;
+
+        /// <summary>
+        /// コンストラクタ。
+        /// </summary>
         public JoinRoomModel() {
             var playerName = PlayerPrefsManager.PlayerName;
-            this.playerName = new ReactiveProperty<string>(playerName);
+            playerNameProperty = new ReactiveProperty<string>(playerName);
         }
 
+        /// <summary>
+        /// プレイヤー名をセットする。
+        /// </summary>
+        /// <param name="playerName">保持したいプレイヤー名</param>
         public void SetPlayerName(string playerName) {
             PlayerPrefsManager.PlayerName = playerName;
-            this.playerName.Value = playerName;
+            playerNameProperty.Value = playerName;
         }
     }
 }
