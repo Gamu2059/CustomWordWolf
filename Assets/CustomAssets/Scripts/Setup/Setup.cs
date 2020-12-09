@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using Mirror;
-using UniRx;
+﻿using Mirror;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace Setup {
+    /// <summary>
+    /// Setupシーンの管理コンポーネント。
+    /// </summary>
     public class Setup : MonoBehaviour {
         [SerializeField]
         private bool isDebug;
@@ -20,18 +17,11 @@ namespace Setup {
         [SerializeField]
         private string gameScene;
 
-        [SerializeField]
-        private Button serverButton;
-
-        [SerializeField]
-        private Button clientButton;
-
         private void Start() {
+            // UNITY_SERVERが定義されていない(ServerBuildがOff)時に実行される
 #if !UNITY_SERVER
             NetworkManager.singleton.networkAddress = isDebug ? "localhost" : address;
             SceneManager.LoadScene(gameScene);
-            // serverButton.OnClickAsObservable().Subscribe(_ => NetworkManager.singleton.StartServer());
-            // clientButton.OnClickAsObservable().Subscribe(_ => SceneManager.LoadScene(gameScene));
 #endif
         }
     }

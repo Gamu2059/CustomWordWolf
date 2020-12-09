@@ -8,6 +8,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace Lobby.JoinRoom.RoomList {
+    /// <summary>
+    /// 部屋一覧要素UIのViewコンポーネント。
+    /// </summary>
     public class JoinRoomElementView : MonoBehaviour {
         [SerializeField]
         private Text roomNameText;
@@ -21,8 +24,15 @@ namespace Lobby.JoinRoom.RoomList {
         [SerializeField]
         private CustomButton joinRoomButton;
 
+        /// <summary>
+        /// 部屋参加ボタンのUniRxイベント。
+        /// </summary>
         public IObservable<Unit> JoinRoomObservable => joinRoomButton.Button.OnClickAsObservable();
 
+        /// <summary>
+        /// Viewを初期化する。
+        /// </summary>
+        /// <param name="roomData">部屋データ</param>
         public void Initialize(RoomSimpleData roomData) {
             roomNameText.text = roomData.RoomName;
             hostNameText.text = roomData.HostName;
